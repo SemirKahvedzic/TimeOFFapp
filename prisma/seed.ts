@@ -4,7 +4,7 @@ const { PrismaClient } = require("@prisma/client");
 const { PrismaBetterSqlite3 } = require("@prisma/adapter-better-sqlite3");
 import bcrypt from "bcryptjs";
 
-const adapter = new PrismaBetterSqlite3({ url: "file:./dev.db" });
+const adapter = new PrismaBetterSqlite3({ url: process.env.DATABASE_URL ?? "file:./dev.db" });
 const prisma = new PrismaClient({ adapter });
 
 const LEAVE_TYPES = [
