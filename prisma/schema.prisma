@@ -1,0 +1,155 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+/// Singleton company record. There is only one row per deployment.
+model Company {
+  id           String   @id @default(cuid())
+  name         String   @default("My Company")
+  tagline      String?
+  logoUrl      String?
+  brandColor   String   @default("#7c5cff")
+  accentColor  String   @default("#ff8fb1")
+  theme        String   @default("light")    // "light" | "dark"
+  language     String   @default("en")       // "en" | "de" | "it"
+  workWeek     String   @default("1,2,3,4,5") // CSV of weekday numbers (0=Sun..6=Sat)
+  countryCode  String   @default("US")
+  timeZone     String   @default("UTC")
+  icalToken    String   @unique @default(cuid())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Department {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  color     String   @default("#7c5cff")
+  createdAt DateTime @default(now())
+
+  members   User[]
+}
+
+model LeaveType {
+  id              String   @id @default(cuid())
+  key             String   @unique // e.g. "vacation"
+  label           String           // e.g. "Vacation"
+  emoji           String   @default("🌴")
+  color           String   @default("#10b981") // hex used for pills/calendar
+  defaultAllowance Float?          // days/year, null means uncapped
+  paid            Boolean  @default(true)
+  requiresApproval Boolean @default(true)
+  order           Int      @default(0)
+  archived        Boolean  @default(false)
+  createdAt       DateTime @default(now())
+
+  requests        TimeOffRequest[]
+  balances        LeaveBalance[]
+}
+
+model Holiday {
+  id        String   @id @default(cuid())
+  name      String
+  date      DateTime
+  recurring Boolean  @default(false) // repeat every year on same MM-DD
+  source    String   @default("company") // "company" | "public"
+  createdAt DateTime @default(now())
+
+  @@index([date])
+}
+
+model LeaveBalance {
+  id          String   @id @default(cuid())
+  userId      String
+  leaveTypeId String
+  year        Int
+  allowance   Float    @default(0)
+  used        Float    @default(0)
+  carriedOver Float    @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  leaveType LeaveType @relation(fields: [leaveTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, leaveTypeId, year])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  action     String   // e.g. "request.approved"
+  targetType String?  // e.g. "TimeOffRequest"
+  targetId   String?
+  metadata   String?  // JSON-serialized blob
+  createdAt  DateTime @default(now())
+
+  actor User? @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  password     String
+  role         String   @default("employee")
+  jobTitle     String?
+  phoneNumber  String?
+  avatarColor  String?  // hex override; if null, deterministic gradient is used
+  managerId    String?
+  departmentId String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  manager      User?  @relation("ManagerReports", fields: [managerId], references: [id], onDelete: SetNull)
+  reports      User[] @relation("ManagerReports")
+  department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+
+  timeOffRequests  TimeOffRequest[] @relation("RequestedBy")
+  reviewedRequests TimeOffRequest[] @relation("ReviewedBy")
+  attendances      Attendance[]
+  balances         LeaveBalance[]
+  auditLogs        AuditLog[] @relation("AuditActor")
+}
+
+model TimeOffRequest {
+  id              String    @id @default(cuid())
+  userId          String
+  startDate       DateTime
+  endDate         DateTime
+  reason          String?
+  rejectionReason String?
+  type            String    @default("vacation") // legacy fallback key
+  leaveTypeId     String?
+  halfDayStart    Boolean   @default(false)
+  halfDayEnd      Boolean   @default(false)
+  attachmentUrl   String?
+  status          String    @default("pending")
+  reviewedById    String?
+  reviewedAt      DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user       User       @relation("RequestedBy", fields: [userId], references: [id], onDelete: Cascade)
+  reviewedBy User?      @relation("ReviewedBy", fields: [reviewedById], references: [id])
+  leaveType  LeaveType? @relation(fields: [leaveTypeId], references: [id], onDelete: SetNull)
+}
+
+model Attendance {
+  id        String   @id @default(cuid())
+  userId    String
+  date      DateTime
+  status    String
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+}

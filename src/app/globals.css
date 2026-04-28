@@ -1,26 +1,240 @@
 @import "tailwindcss";
 
+/* ── Theme tokens (overridable per-company at runtime) ────────────── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Brand — overridden inline by the layout from Company.brandColor */
+  --brand:       #7c5cff;
+  --brand-ink:   #ffffff;
+  --brand-soft:  rgba(124, 92, 255, 0.14);
+  --brand-glow:  rgba(124, 92, 255, 0.45);
+  --accent:      #ff8fb1;
+  --accent-soft: rgba(255, 143, 177, 0.14);
+
+  /* Surfaces */
+  --bg:        #eeeaf6;
+  --bg-tint-1: #f6e8f0;
+  --bg-tint-2: #e3ecf9;
+  --surface:   #f4f1fa;
+  --surface-2: #ffffff;
+  --line:      rgba(36, 26, 70, 0.06);
+  --line-2:    rgba(36, 26, 70, 0.10);
+
+  /* Ink */
+  --ink:       #1c1640;
+  --ink-soft:  #5d5979;
+  --ink-mute:  #8d8aa3;
+  --ink-faint: #b9b6cc;
+
+  /* Status */
+  --ok:    #10b981;
+  --ok-bg: rgba(16, 185, 129, 0.12);
+  --warn:  #f59e0b;
+  --warn-bg: rgba(245, 158, 11, 0.14);
+  --err:   #ef4444;
+  --err-bg: rgba(239, 68, 68, 0.12);
+
+  /* Radii */
+  --r-sm: 12px;
+  --r-md: 18px;
+  --r-lg: 26px;
+  --r-xl: 36px;
+
+  /* Tactile Soft-UI shadows — dual-light neumorphism */
+  --soft-1:
+    6px 6px 16px rgba(165, 153, 200, 0.32),
+    -6px -6px 16px rgba(255, 255, 255, 0.95);
+  --soft-2:
+    10px 10px 28px rgba(165, 153, 200, 0.34),
+    -10px -10px 28px rgba(255, 255, 255, 0.95);
+  --soft-press:
+    inset 5px 5px 12px rgba(165, 153, 200, 0.40),
+    inset -5px -5px 12px rgba(255, 255, 255, 0.95);
+  --soft-press-sm:
+    inset 3px 3px 7px rgba(165, 153, 200, 0.40),
+    inset -3px -3px 7px rgba(255, 255, 255, 0.95);
+  --glow-brand:
+    0 14px 36px -10px var(--brand-glow),
+    0 4px 14px -4px var(--brand-glow);
 }
+
+/* ── Dark theme — fixed palette, brand colors still apply on top ──── */
+[data-theme="dark"] {
+  /* Near-black neutral with the smallest hint of indigo. Avoids the
+     "purple haze" of overly saturated dark themes. */
+  --bg:        #0b0c12;
+  --bg-tint-1: rgba(255, 143, 177, 0.07);
+  --bg-tint-2: rgba(124, 92, 255, 0.08);
+  --surface:   #14151d;       /* recessed inputs / inset chips */
+  --surface-2: #1c1d28;       /* lifted cards */
+  --line:      rgba(255, 255, 255, 0.06);
+  --line-2:    rgba(255, 255, 255, 0.10);
+
+  /* Off-white ink, never pure white — easier on the eyes. */
+  --ink:       #ebeaf3;
+  --ink-soft:  #b6b4c7;
+  --ink-mute:  #84819a;
+  --ink-faint: #545266;
+
+  /* Status backgrounds — translucent so they tint the dark surface. */
+  --ok-bg:     rgba(16, 185, 129, 0.16);
+  --warn-bg:   rgba(245, 158, 11, 0.18);
+  --err-bg:    rgba(239, 68, 68, 0.16);
+
+  /* Drop-shadow + thin top highlight rather than dual-light neumorphism.
+     In dark mode a strong "white from above" shadow looks fake; a tiny
+     1px inner highlight reads as a polished bevel without shouting. */
+  --soft-1:
+    0 6px 18px rgba(0, 0, 0, 0.55),
+    0 1px 0 rgba(255, 255, 255, 0.04) inset;
+  --soft-2:
+    0 16px 38px rgba(0, 0, 0, 0.65),
+    0 1px 0 rgba(255, 255, 255, 0.05) inset;
+  --soft-press:
+    0 2px 8px rgba(0, 0, 0, 0.55) inset,
+    0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+  --soft-press-sm:
+    0 1px 4px rgba(0, 0, 0, 0.45) inset,
+    0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+
+  /* Brand glow stays expressive against deep surfaces. */
+  --glow-brand:
+    0 16px 40px -12px var(--brand-glow),
+    0 4px 14px -4px var(--brand-glow);
+}
+
+[data-theme="dark"] body {
+  background-image:
+    radial-gradient(1200px 700px at 8% -10%, var(--bg-tint-1) 0%, transparent 55%),
+    radial-gradient(1100px 700px at 100% 12%, var(--bg-tint-2) 0%, transparent 50%),
+    radial-gradient(900px  600px at 50% 100%, rgba(124, 92, 255, 0.08) 0%, transparent 60%);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb       { background: rgba(255, 255, 255, 0.12); }
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.22); }
+
+/* Date pickers and color swatches read poorly without help in dark mode */
+[data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.85); opacity: 0.7; }
+[data-theme="dark"] input[type="date"] { color-scheme: dark; }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-geist);
+
+  --color-brand:      var(--brand);
+  --color-brand-soft: var(--brand-soft);
+  --color-accent:     var(--accent);
+  --color-accent-soft:var(--accent-soft);
+  --color-ink:        var(--ink);
+  --color-ink-soft:   var(--ink-soft);
+  --color-ink-mute:   var(--ink-mute);
+  --color-ink-faint:  var(--ink-faint);
+  --color-surface:    var(--surface);
+  --color-surface-2:  var(--surface-2);
+  --color-line:       var(--line);
+  --color-bg:         var(--bg);
+
+  --radius-soft: 18px;
+  --radius-pill: 9999px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--ink);
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(1200px 700px at 8% -10%, var(--bg-tint-1) 0%, transparent 55%),
+    radial-gradient(1100px 700px at 100% 12%, var(--bg-tint-2) 0%, transparent 50%),
+    radial-gradient(900px  600px at 50% 100%, rgba(124, 92, 255, 0.10) 0%, transparent 60%);
+  background-attachment: fixed;
 }
+
+::selection { background: var(--brand-soft); color: var(--ink); }
+
+/* Remove the default form-control look */
+input, textarea, select, button { font: inherit; color: inherit; }
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0.5;
+  cursor: pointer;
+}
+
+/* Clean up native color input — fills its box edge-to-edge without
+   the browser's default white border + padding around the swatch. */
+input[type="color"] {
+  -webkit-appearance: none;
+  appearance: none;
+  border: none;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+}
+input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+input[type="color"]::-webkit-color-swatch         { border: none; border-radius: inherit; }
+input[type="color"]::-moz-color-swatch            { border: none; border-radius: inherit; }
+
+/* ── Custom scrollbars ─────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(124, 92, 255, 0.22); border-radius: 6px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(124, 92, 255, 0.4); }
+
+/* ── Reusable utility classes (the Soft-UI vocabulary) ─────────────── */
+.soft-surface {
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--soft-1);
+}
+.soft-surface-2 {
+  background: var(--surface-2);
+  border-radius: var(--r-lg);
+  box-shadow: var(--soft-2);
+}
+.soft-inset {
+  background: var(--surface);
+  border-radius: var(--r-md);
+  box-shadow: var(--soft-press);
+}
+.soft-inset-sm {
+  background: var(--surface);
+  border-radius: var(--r-sm);
+  box-shadow: var(--soft-press-sm);
+}
+.soft-pill {
+  background: var(--surface);
+  border-radius: 9999px;
+  box-shadow: var(--soft-1);
+}
+.soft-press:active { box-shadow: var(--soft-press); transform: translateY(0.5px); }
+
+/* Brand-tinted glow used on hero CTAs / KPI tiles */
+.brand-glow { box-shadow: var(--glow-brand); }
+
+/* Animated bobbing dot for "live" indicators */
+@keyframes pulse-soft {
+  0%, 100% { transform: scale(1);   opacity: 1; }
+  50%      { transform: scale(1.4); opacity: 0.55; }
+}
+.pulse-dot { animation: pulse-soft 1.6s ease-in-out infinite; }
+
+/* Small tilt-on-hover used on KPI tiles */
+.tilt-hover { transition: transform 220ms ease, box-shadow 220ms ease; }
+.tilt-hover:hover { transform: translateY(-2px) rotate(-0.4deg); box-shadow: var(--soft-2); }
+
+/* Sweep-glow cap used on top edge of hero cards */
+.brand-cap {
+  position: absolute; top: 0; left: 12%; right: 12%; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--brand), var(--accent), transparent);
+  filter: blur(0.5px);
+  border-radius: 9999px;
+}
+
+/* Confetti-burst fade used after a successful action */
+@keyframes burst-fade {
+  0%   { opacity: 0; transform: scale(0.85); }
+  35%  { opacity: 1; transform: scale(1.06); }
+  100% { opacity: 0; transform: scale(1.18); }
+}
+.burst { animation: burst-fade 700ms ease-out forwards; }
