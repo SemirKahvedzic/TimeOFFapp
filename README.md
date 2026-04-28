@@ -48,7 +48,7 @@ Built with Next.js 16 (App Router) · Prisma 7 · NextAuth · Tailwind CSS v4.
 | Language    | TypeScript                                                |
 | UI          | Tailwind CSS v4 + custom design tokens (CSS variables)    |
 | Auth        | NextAuth v4 (credentials provider, JWT sessions)          |
-| Database    | Prisma 7 with SQLite (dev) — swap adapter for production  |
+| Database    | Prisma 7 + Postgres (Neon recommended, any Postgres works)|
 | Email       | EmailJS (optional, for invites + request status)          |
 | Icons       | lucide-react                                              |
 | Tests       | Jest                                                      |
@@ -57,16 +57,21 @@ Built with Next.js 16 (App Router) · Prisma 7 · NextAuth · Tailwind CSS v4.
 
 ## Quick start
 
+You need a Postgres database. Easiest is Neon — free tier, branchable,
+takes 30 seconds to provision at <https://neon.tech>.
+
 ```bash
 # 1. Install
 npm install
 
 # 2. Configure
 cp .env.example .env
-# fill in NEXTAUTH_SECRET and any optional EmailJS keys
+# - DATABASE_URL: your Neon pooled URL
+# - NEXTAUTH_SECRET: openssl rand -base64 32
+# - (optional) EmailJS keys
 
-# 3. Set up the database (creates dev.db locally)
-npx prisma migrate dev
+# 3. Push the schema to your database
+npx prisma migrate dev --name init
 
 # 4. Seed demo data
 npm run db:seed
@@ -91,42 +96,42 @@ npm run dev
 ## Deploy on Netlify
 
 The repo ships with `netlify.toml` and works with Netlify's Next.js plugin
-out of the box.
+out of the box. The only external dependency is a Postgres database.
 
-### 1 · Pick a database
+### 1 · Provision Postgres on Neon
 
-Local dev uses SQLite (`dev.db`). Netlify (and any serverless host) has an
-ephemeral filesystem, so you need a hosted database for production:
+Easiest path is the **Neon** Netlify extension: in your Netlify site →
+**Extensions → Neon → Install**. It provisions a Postgres branch and
+auto-injects `DATABASE_URL` into the site's environment.
 
-| Option                             | Why                                                            |
-| ---------------------------------- | -------------------------------------------------------------- |
-| **Turso / libSQL** *(recommended)* | SQLite-compatible — schema works as-is, just swap the Prisma adapter to `@prisma/adapter-libsql`. |
-| **Neon Postgres**                  | Battle-tested. Change `provider = "postgresql"` in `prisma/schema.prisma` and re-run `prisma migrate dev`. |
-| **Supabase Postgres**              | Same as Neon, plus a UI to inspect data.                       |
+(Or create one manually at <https://neon.tech> and copy the **pooled**
+connection string.)
 
-### 2 · Set environment variables in Netlify
+### 2 · Set the rest of the env vars in Netlify
 
-In the site dashboard → **Site configuration → Environment variables**, add:
+**Site configuration → Environment variables**:
 
 ```
-DATABASE_URL          = <your hosted DB URL>
 NEXTAUTH_SECRET       = <openssl rand -base64 32>
 NEXTAUTH_URL          = https://your-app.netlify.app
 
-# Optional — invitation + status emails
+# Optional — invitation + request-status emails
 NEXT_PUBLIC_EMAILJS_SERVICE_ID
 NEXT_PUBLIC_EMAILJS_TEMPLATE_ID
 NEXT_PUBLIC_EMAILJS_INVITE_TEMPLATE_ID
 NEXT_PUBLIC_EMAILJS_PUBLIC_KEY
 ```
 
-### 3 · Run migrations on the hosted DB
+`DATABASE_URL` is set by the Neon extension; if you provisioned manually,
+add it here too.
 
-Run once, locally, against the production DB URL:
+### 3 · Apply the schema to your Neon DB
+
+Pull the same `DATABASE_URL` value into your local `.env`, then run once:
 
 ```bash
-DATABASE_URL="<your hosted db url>" npx prisma migrate deploy
-DATABASE_URL="<your hosted db url>" npm run db:seed   # only if you want demo data
+npx prisma migrate deploy        # applies migrations from prisma/migrations
+npm run db:seed                  # optional — seeds demo company + users
 ```
 
 ### 4 · Deploy

@@ -1,14 +1,16 @@
 import { PrismaClient } from "@prisma/client";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { PrismaPg } from "@prisma/adapter-pg";
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 
 function createClient() {
-  // Honour DATABASE_URL when set; fall back to local SQLite for dev.
-  // The better-sqlite3 adapter only handles file:// URLs — for hosted
-  // Turso/libSQL or Postgres in production, swap the adapter here.
-  const url = process.env.DATABASE_URL ?? "file:./dev.db";
-  const adapter = new PrismaBetterSqlite3({ url });
+  if (!process.env.DATABASE_URL) {
+    throw new Error(
+      "DATABASE_URL is not set. Local dev: copy your Neon URL into .env. " +
+      "Production: set it in your host's env panel."
+    );
+  }
+  const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
   return new PrismaClient({ adapter, log: ["error"] });
 }
 

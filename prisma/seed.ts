@@ -1,10 +1,14 @@
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { PrismaClient } = require("@prisma/client");
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { PrismaBetterSqlite3 } = require("@prisma/adapter-better-sqlite3");
+const { PrismaPg } = require("@prisma/adapter-pg");
+import "dotenv/config";
 import bcrypt from "bcryptjs";
 
-const adapter = new PrismaBetterSqlite3({ url: process.env.DATABASE_URL ?? "file:./dev.db" });
+if (!process.env.DATABASE_URL) {
+  throw new Error("DATABASE_URL is not set — paste your Neon URL into .env first.");
+}
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
 const LEAVE_TYPES = [
