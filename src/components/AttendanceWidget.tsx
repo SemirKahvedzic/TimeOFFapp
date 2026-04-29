@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { CheckCircle2, Thermometer, BriefcaseMedical, RefreshCw } from "lucide-react";
 import toast from "react-hot-toast";
@@ -25,6 +25,26 @@ export function AttendanceWidget() {
   const today = format(new Date(), "yyyy-MM-dd");
   const [marked, setMarked] = useState<Status | null>(null);
   const [loading, setLoading] = useState<Status | null>(null);
+  const [hydrated, setHydrated] = useState(false);
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/attendance");
+        if (!res.ok) return;
+        const records: { date: string; status: Status }[] = await res.json();
+        const todayRecord = records.find((r) => r.date.slice(0, 10) === today);
+        if (!cancelled && todayRecord) setMarked(todayRecord.status);
+      } finally {
+        if (!cancelled) setHydrated(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [today]);
 
   async function mark(status: Status) {
     setLoading(status);
@@ -42,6 +62,15 @@ export function AttendanceWidget() {
     } finally {
       setLoading(null);
     }
+  }
+
+  if (!hydrated) {
+    return (
+      <div
+        className="rounded-3xl p-5 h-[116px] animate-pulse"
+        style={{ background: "var(--surface-2)", boxShadow: "var(--soft-1)" }}
+      />
+    );
   }
 
   if (marked) {
