@@ -93,54 +93,70 @@ npm run dev
 
 ---
 
-## Deploy on Netlify
+## Deploy on Fly.io
 
-The repo ships with `netlify.toml` and works with Netlify's Next.js plugin
-out of the box. The only external dependency is a Postgres database.
+The repo ships with a `Dockerfile` and `fly.toml`. The Dockerfile uses
+Next.js standalone output and carries the Prisma CLI into the runner
+image so migrations can run on every release.
 
-### 1 · Provision Postgres on Neon
+### 1 · Provision Postgres
 
-Easiest path is the **Neon** Netlify extension: in your Netlify site →
-**Extensions → Neon → Install**. It provisions a Postgres branch and
-auto-injects `DATABASE_URL` into the site's environment.
-
-(Or create one manually at <https://neon.tech> and copy the **pooled**
-connection string.)
-
-### 2 · Set the rest of the env vars in Netlify
-
-**Site configuration → Environment variables**:
-
-```
-NEXTAUTH_SECRET       = <openssl rand -base64 32>
-NEXTAUTH_URL          = https://your-app.netlify.app
-
-# Optional — invitation + request-status emails
-NEXT_PUBLIC_EMAILJS_SERVICE_ID
-NEXT_PUBLIC_EMAILJS_TEMPLATE_ID
-NEXT_PUBLIC_EMAILJS_INVITE_TEMPLATE_ID
-NEXT_PUBLIC_EMAILJS_PUBLIC_KEY
-```
-
-`DATABASE_URL` is set by the Neon extension; if you provisioned manually,
-add it here too.
-
-### 3 · Apply the schema to your Neon DB
-
-Pull the same `DATABASE_URL` value into your local `.env`, then run once:
+Either spin up a Fly Postgres cluster colocated with the app:
 
 ```bash
-npx prisma migrate deploy        # applies migrations from prisma/migrations
-npm run db:seed                  # optional — seeds demo company + users
+fly postgres create --name timeoff-db --region fra
+fly postgres attach timeoff-db          # injects DATABASE_URL automatically
+```
+
+…or use Neon (or any managed Postgres) and copy the **pooled**
+connection string — it'll go in as a Fly secret in the next step.
+
+### 2 · Create the app and set secrets
+
+```bash
+fly launch --no-deploy --copy-config    # keeps the committed fly.toml
+
+fly secrets set \
+  DATABASE_URL="postgres://…?sslmode=require" \
+  NEXTAUTH_SECRET="$(openssl rand -base64 32)" \
+  NEXTAUTH_URL="https://<your-app>.fly.dev"
+
+# Optional — invitation + request-status emails
+fly secrets set \
+  NEXT_PUBLIC_EMAILJS_SERVICE_ID=… \
+  NEXT_PUBLIC_EMAILJS_TEMPLATE_ID=… \
+  NEXT_PUBLIC_EMAILJS_INVITE_TEMPLATE_ID=… \
+  NEXT_PUBLIC_EMAILJS_PUBLIC_KEY=…
+```
+
+(`fly postgres attach` already set `DATABASE_URL` if you went the Fly
+Postgres route — skip it above.)
+
+### 3 · Generate the initial migration
+
+There are no committed migrations yet. Pull the same `DATABASE_URL` into
+your local `.env`, then run once:
+
+```bash
+npx prisma migrate dev --name init      # creates prisma/migrations/
+git add prisma/migrations && git commit -m "Add initial Prisma migration"
 ```
 
 ### 4 · Deploy
 
 ```bash
-git push
+fly deploy
 ```
 
-Netlify picks up `netlify.toml`, runs `npm run build`, and deploys.
+Fly builds the Docker image, runs `prisma migrate deploy` as the
+release command, and rolls out the new machines. Subsequent `git push`es
+to GitHub auto-deploy via the Fly GitHub integration.
+
+To seed demo data into the deployed DB (one-off):
+
+```bash
+fly ssh console -C "npm run db:seed"
+```
 
 ---
 
@@ -170,7 +186,8 @@ Netlify picks up `netlify.toml`, runs `npm run build`, and deploys.
 │       ├── audit.ts           # AuditLog helper
 │       ├── auth.ts            # NextAuth config
 │       └── db.ts              # Prisma client
-└── netlify.toml               # Netlify build config
+├── Dockerfile                 # Next.js standalone + Prisma CLI runtime
+└── fly.toml                   # Fly.io app config
 ```
 
 ---
