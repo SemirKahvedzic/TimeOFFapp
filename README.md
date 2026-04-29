@@ -48,7 +48,7 @@ Built with Next.js 16 (App Router) · Prisma 7 · NextAuth · Tailwind CSS v4.
 | Language    | TypeScript                                                |
 | UI          | Tailwind CSS v4 + custom design tokens (CSS variables)    |
 | Auth        | NextAuth v4 (credentials provider, JWT sessions)          |
-| Database    | Prisma 7 + Postgres (Neon recommended, any Postgres works)|
+| Database    | Prisma 7 + SQLite (local file via better-sqlite3 adapter) |
 | Email       | EmailJS (optional, for invites + request status)          |
 | Icons       | lucide-react                                              |
 | Tests       | Jest                                                      |
@@ -57,21 +57,18 @@ Built with Next.js 16 (App Router) · Prisma 7 · NextAuth · Tailwind CSS v4.
 
 ## Quick start
 
-You need a Postgres database. Easiest is Neon — free tier, branchable,
-takes 30 seconds to provision at <https://neon.tech>.
-
 ```bash
 # 1. Install
 npm install
 
 # 2. Configure
 cp .env.example .env
-# - DATABASE_URL: your Neon pooled URL
-# - NEXTAUTH_SECRET: openssl rand -base64 32
+# - DATABASE_URL defaults to file:./dev.db — leave it as-is
+# - NEXTAUTH_SECRET: any random string for local dev
 # - (optional) EmailJS keys
 
-# 3. Push the schema to your database
-npx prisma migrate dev --name init
+# 3. Create the SQLite file + tables
+npx prisma db push
 
 # 4. Seed demo data
 npm run db:seed
@@ -90,73 +87,6 @@ npm run dev
 | Employee  | `marcus@company.com`   | `employee123` |
 | Employee  | `priya@company.com`    | `employee123` |
 | Employee  | `tom@company.com`      | `employee123` |
-
----
-
-## Deploy on Fly.io
-
-The repo ships with a `Dockerfile` and `fly.toml`. The Dockerfile uses
-Next.js standalone output and carries the Prisma CLI into the runner
-image so migrations can run on every release.
-
-### 1 · Provision Postgres
-
-Either spin up a Fly Postgres cluster colocated with the app:
-
-```bash
-fly postgres create --name timeoff-db --region fra
-fly postgres attach timeoff-db          # injects DATABASE_URL automatically
-```
-
-…or use Neon (or any managed Postgres) and copy the **pooled**
-connection string — it'll go in as a Fly secret in the next step.
-
-### 2 · Create the app and set secrets
-
-```bash
-fly launch --no-deploy --copy-config    # keeps the committed fly.toml
-
-fly secrets set \
-  DATABASE_URL="postgres://…?sslmode=require" \
-  NEXTAUTH_SECRET="$(openssl rand -base64 32)" \
-  NEXTAUTH_URL="https://<your-app>.fly.dev"
-
-# Optional — invitation + request-status emails
-fly secrets set \
-  NEXT_PUBLIC_EMAILJS_SERVICE_ID=… \
-  NEXT_PUBLIC_EMAILJS_TEMPLATE_ID=… \
-  NEXT_PUBLIC_EMAILJS_INVITE_TEMPLATE_ID=… \
-  NEXT_PUBLIC_EMAILJS_PUBLIC_KEY=…
-```
-
-(`fly postgres attach` already set `DATABASE_URL` if you went the Fly
-Postgres route — skip it above.)
-
-### 3 · Generate the initial migration
-
-There are no committed migrations yet. Pull the same `DATABASE_URL` into
-your local `.env`, then run once:
-
-```bash
-npx prisma migrate dev --name init      # creates prisma/migrations/
-git add prisma/migrations && git commit -m "Add initial Prisma migration"
-```
-
-### 4 · Deploy
-
-```bash
-fly deploy
-```
-
-Fly builds the Docker image, runs `prisma migrate deploy` as the
-release command, and rolls out the new machines. Subsequent `git push`es
-to GitHub auto-deploy via the Fly GitHub integration.
-
-To seed demo data into the deployed DB (one-off):
-
-```bash
-fly ssh console -C "npm run db:seed"
-```
 
 ---
 
@@ -186,8 +116,7 @@ fly ssh console -C "npm run db:seed"
 │       ├── audit.ts           # AuditLog helper
 │       ├── auth.ts            # NextAuth config
 │       └── db.ts              # Prisma client
-├── Dockerfile                 # Next.js standalone + Prisma CLI runtime
-└── fly.toml                   # Fly.io app config
+└── dev.db                     # SQLite database file (gitignored)
 ```
 
 ---
