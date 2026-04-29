@@ -11,7 +11,7 @@
 #
 # After that, pushes to GitHub auto-deploy via the Fly GitHub integration.
 
-app = "myvacationapp"           # change to whatever name `fly launch` registered
+app = "timeoffapp"
 primary_region = "fra"          # Frankfurt — pick what's closest to your users / DB
 
 # Run `prisma migrate deploy` once per release before traffic shifts to the new
