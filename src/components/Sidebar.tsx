@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import {
   LayoutDashboard, Calendar, Users, LogOut, BarChart3, CalendarCheck,
-  Settings, PieChart, Sparkles, SlidersHorizontal,
+  Settings, PieChart, Sparkles, SlidersHorizontal, UserCog,
 } from "lucide-react";
 import { Avatar } from "./Avatar";
 import { useT } from "@/lib/i18n/context";
@@ -23,6 +23,7 @@ const adminNav: { href: string; key: MessageKey; icon: React.ElementType }[] = [
   { href: "/admin/users",    key: "nav.team",        icon: Users },
   { href: "/admin/reports",  key: "nav.reports",     icon: PieChart },
   { href: "/admin/settings", key: "nav.settings",    icon: Settings },
+  { href: "/preferences",    key: "nav.account",     icon: UserCog },
 ];
 
 interface SidebarProps {
@@ -40,7 +41,7 @@ export function Sidebar({ companyName, companyTagline, logoUrl }: SidebarProps) 
 
   return (
     <aside
-      className="w-56 shrink-0 flex flex-col h-screen sticky top-0 px-3.5 py-4"
+      className="w-64 shrink-0 flex flex-col h-screen sticky top-0 px-3.5 py-4"
       style={{ background: "var(--bg)" }}
     >
       {/* ── Brand ── */}

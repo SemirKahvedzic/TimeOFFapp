@@ -19,6 +19,7 @@ const en = {
   "nav.settings":    "Settings",
   "nav.signOut":     "Sign out",
   "nav.preferences": "Settings",
+  "nav.account":     "My account",
   "nav.taglineFallback": "Time-off, simplified",
 
   "prefs.label":           "Account",
@@ -402,6 +403,7 @@ const de: Record<Key, string> = {
   "nav.settings":    "Einstellungen",
   "nav.signOut":     "Abmelden",
   "nav.preferences": "Einstellungen",
+  "nav.account":     "Mein Konto",
   "nav.taglineFallback": "Urlaubsverwaltung, vereinfacht",
 
   "prefs.label":           "Konto",
@@ -761,6 +763,7 @@ const it: Record<Key, string> = {
   "nav.settings":    "Impostazioni",
   "nav.signOut":     "Esci",
   "nav.preferences": "Impostazioni",
+  "nav.account":     "Il mio account",
   "nav.taglineFallback": "Ferie, semplificate",
 
   "prefs.label":           "Account",
