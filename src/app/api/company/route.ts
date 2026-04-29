@@ -21,7 +21,9 @@ export async function PATCH(req: NextRequest) {
   }
   const body = await req.json();
   const company = await getCompany();
-  const allowed = ["name", "tagline", "logoUrl", "brandColor", "accentColor", "theme", "language", "workWeek", "countryCode", "timeZone"] as const;
+  // `language` is intentionally omitted: language is a per-user setting,
+  // not a workspace-wide one. Use /api/me/preferences to change it.
+  const allowed = ["name", "tagline", "logoUrl", "brandColor", "accentColor", "theme", "workWeek", "countryCode", "timeZone"] as const;
   const data: Prisma.CompanyUpdateInput = {};
   for (const k of allowed) if (k in body) data[k] = body[k];
 

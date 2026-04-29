@@ -1,9 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Sun, Moon, Globe, Save } from "lucide-react";
+import { Sun, Moon, Globe, Save, Eye, EyeOff, KeyRound } from "lucide-react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/Button";
-import { Select, FieldLabel } from "@/components/ui/Input";
+import { Input, Select, FieldLabel } from "@/components/ui/Input";
 import { useT } from "@/lib/i18n/context";
 import { LANGUAGES, LANGUAGE_LABELS, type Lang } from "@/lib/i18n/messages";
 import { usePageTitle } from "@/lib/usePageTitle";
@@ -71,6 +71,9 @@ export default function PreferencesPage() {
       </div>
 
       <div className="rounded-3xl p-6 space-y-5" style={{ background: "var(--surface-2)", boxShadow: "var(--soft-1)" }}>
+        <h2 className="text-base font-bold" style={{ color: "var(--ink)" }}>
+          {t("prefs.section.appearance")}
+        </h2>
         {loading ? (
           <p className="text-sm" style={{ color: "var(--ink-mute)" }}>{t("common.loading")}</p>
         ) : (
@@ -129,6 +132,153 @@ export default function PreferencesPage() {
           </>
         )}
       </div>
+
+      <PasswordSection />
+    </div>
+  );
+}
+
+function PasswordSection() {
+  const t = useT();
+  const [current, setCurrent] = useState("");
+  const [next, setNext] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNext, setShowNext] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    if (next.length < 8) {
+      toast.error(t("prefs.password.tooShort"));
+      return;
+    }
+    if (next !== confirm) {
+      toast.error(t("prefs.password.mismatch"));
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch("/api/me/password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword: current, newPassword: next }),
+      });
+      if (res.status === 403) {
+        toast.error(t("prefs.password.wrongCurrent"));
+        return;
+      }
+      if (res.status === 400) {
+        const body = await res.json().catch(() => null);
+        toast.error(
+          body?.error === "too_short"
+            ? t("prefs.password.tooShort")
+            : t("prefs.password.saveFailed")
+        );
+        return;
+      }
+      if (!res.ok) throw new Error("Failed");
+      toast.success(t("prefs.password.saved"));
+      setCurrent("");
+      setNext("");
+      setConfirm("");
+    } catch {
+      toast.error(t("prefs.password.saveFailed"));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <form
+      onSubmit={save}
+      className="rounded-3xl p-6 space-y-5"
+      style={{ background: "var(--surface-2)", boxShadow: "var(--soft-1)" }}
+    >
+      <div>
+        <h2 className="text-base font-bold flex items-center gap-2" style={{ color: "var(--ink)" }}>
+          <KeyRound size={16} style={{ color: "var(--brand)" }} />
+          {t("prefs.section.password")}
+        </h2>
+        <p className="text-xs mt-1" style={{ color: "var(--ink-mute)" }}>
+          {t("prefs.section.passwordHint")}
+        </p>
+      </div>
+
+      <div>
+        <FieldLabel>{t("prefs.password.current")}</FieldLabel>
+        <PasswordInput
+          value={current}
+          onChange={setCurrent}
+          show={showCurrent}
+          onToggle={() => setShowCurrent((v) => !v)}
+          autoComplete="current-password"
+          required
+        />
+      </div>
+
+      <div>
+        <FieldLabel>{t("prefs.password.new")}</FieldLabel>
+        <PasswordInput
+          value={next}
+          onChange={setNext}
+          show={showNext}
+          onToggle={() => setShowNext((v) => !v)}
+          autoComplete="new-password"
+          required
+        />
+      </div>
+
+      <div>
+        <FieldLabel>{t("prefs.password.confirm")}</FieldLabel>
+        <PasswordInput
+          value={confirm}
+          onChange={setConfirm}
+          show={showNext}
+          onToggle={() => setShowNext((v) => !v)}
+          autoComplete="new-password"
+          required
+        />
+      </div>
+
+      <Button type="submit" loading={saving} size="lg">
+        <KeyRound size={15} />
+        {t("prefs.password.save")}
+      </Button>
+    </form>
+  );
+}
+
+function PasswordInput({
+  value, onChange, show, onToggle, autoComplete, required,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  show: boolean;
+  onToggle: () => void;
+  autoComplete?: string;
+  required?: boolean;
+}) {
+  return (
+    <div className="relative">
+      <Input
+        type={show ? "text" : "password"}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="••••••••"
+        autoComplete={autoComplete}
+        required={required}
+        style={{ paddingRight: "44px" }}
+      />
+      <button
+        type="button"
+        onClick={onToggle}
+        className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-full"
+        style={{ color: "var(--ink-mute)" }}
+        tabIndex={-1}
+      >
+        {show ? <EyeOff size={16} /> : <Eye size={16} />}
+      </button>
     </div>
   );
 }

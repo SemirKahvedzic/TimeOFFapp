@@ -37,11 +37,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   ]);
   const css = company ? brandCssVars(company.brandColor, company.accentColor) : "";
 
-  // User preference wins over company default; both gracefully fall back.
-  const themeRaw    = userPrefs?.theme    ?? company?.theme    ?? "light";
-  const languageRaw = userPrefs?.language ?? company?.language ?? "en";
+  // Theme falls back to the company default; language is intentionally
+  // per-user only — workspace-wide language cascades caused admins to flip
+  // every employee's UI by accident.
+  const themeRaw = userPrefs?.theme ?? company?.theme ?? "light";
   const theme = themeRaw === "dark" ? "dark" : "light";
-  const language = languageRaw;
+  const language = userPrefs?.language ?? "en";
 
   return (
     <html

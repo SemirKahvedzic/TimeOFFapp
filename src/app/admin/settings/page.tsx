@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   Save, Trash2, Plus, Building2, Palette, Briefcase, PartyPopper,
-  Link as LinkIcon, Copy, Check, Pencil, Upload, ImageIcon, Sun, Moon, Globe,
+  Link as LinkIcon, Copy, Check, Pencil, Upload, ImageIcon, Sun, Moon,
   RotateCcw,
 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -12,7 +12,7 @@ import { Input, Select, FieldLabel } from "@/components/ui/Input";
 import { Pill } from "@/components/ui/Badge";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useT } from "@/lib/i18n/context";
-import { LANGUAGES, LANGUAGE_LABELS, type Lang, type MessageKey } from "@/lib/i18n/messages";
+import { type MessageKey } from "@/lib/i18n/messages";
 import { usePageTitle } from "@/lib/usePageTitle";
 
 interface Company {
@@ -242,7 +242,6 @@ function BrandSection({ company, onSaved }: { company: Company; onSaved: () => v
   const [brandColor, setBrandColor] = useState(company.brandColor);
   const [accentColor, setAccentColor] = useState(company.accentColor);
   const [theme, setTheme] = useState<"light" | "dark">((company.theme as "light" | "dark") ?? "light");
-  const [language, setLanguage] = useState<Lang>((company.language as Lang) ?? "en");
   const [workWeek, setWorkWeek] = useState(new Set(company.workWeek.split(",").map(Number)));
   const [timeZone, setTimeZone] = useState(company.timeZone);
   const [countryCode, setCountryCode] = useState(company.countryCode);
@@ -259,7 +258,6 @@ function BrandSection({ company, onSaved }: { company: Company; onSaved: () => v
     brandColor !== company.brandColor ||
     accentColor !== company.accentColor ||
     theme !== company.theme ||
-    language !== company.language ||
     workWeekStr !== company.workWeek ||
     timeZone !== company.timeZone ||
     countryCode !== company.countryCode ||
@@ -294,7 +292,7 @@ function BrandSection({ company, onSaved }: { company: Company; onSaved: () => v
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name, tagline, brandColor, accentColor, logoUrl, theme, language,
+          name, tagline, brandColor, accentColor, logoUrl, theme,
           workWeek: Array.from(workWeek).sort((a, b) => a - b).join(","),
           timeZone, countryCode,
         }),
@@ -378,46 +376,25 @@ function BrandSection({ company, onSaved }: { company: Company; onSaved: () => v
         )}
       </div>
 
-      {/* Theme + Language */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <FieldLabel>{t("settings.brand.theme")}</FieldLabel>
-          <div
-            className="grid grid-cols-2 gap-2 p-1 rounded-2xl"
-            style={{ background: "var(--surface)", boxShadow: "var(--soft-press-sm)" }}
-          >
-            <ThemeChoice
-              active={theme === "light"}
-              onClick={() => setTheme("light")}
-              icon={<Sun size={14} />}
-              label={t("settings.brand.theme.light")}
-            />
-            <ThemeChoice
-              active={theme === "dark"}
-              onClick={() => setTheme("dark")}
-              icon={<Moon size={14} />}
-              label={t("settings.brand.theme.dark")}
-            />
-          </div>
-        </div>
-        <div>
-          <FieldLabel>{t("settings.brand.language")}</FieldLabel>
-          <div className="relative">
-            <Globe
-              size={14}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
-              style={{ color: "var(--ink-mute)" }}
-            />
-            <Select
-              value={language}
-              onChange={(e) => setLanguage(e.target.value as Lang)}
-              style={{ paddingLeft: 38 }}
-            >
-              {LANGUAGES.map((l) => (
-                <option key={l} value={l}>{LANGUAGE_LABELS[l]}</option>
-              ))}
-            </Select>
-          </div>
+      {/* Theme */}
+      <div>
+        <FieldLabel>{t("settings.brand.theme")}</FieldLabel>
+        <div
+          className="grid grid-cols-2 gap-2 p-1 rounded-2xl max-w-md"
+          style={{ background: "var(--surface)", boxShadow: "var(--soft-press-sm)" }}
+        >
+          <ThemeChoice
+            active={theme === "light"}
+            onClick={() => setTheme("light")}
+            icon={<Sun size={14} />}
+            label={t("settings.brand.theme.light")}
+          />
+          <ThemeChoice
+            active={theme === "dark"}
+            onClick={() => setTheme("dark")}
+            icon={<Moon size={14} />}
+            label={t("settings.brand.theme.dark")}
+          />
         </div>
       </div>
 

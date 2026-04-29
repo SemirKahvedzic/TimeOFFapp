@@ -48,24 +48,24 @@ export function Sidebar({ companyName, companyTagline, logoUrl }: SidebarProps) 
         className="px-3.5 py-3 mb-5 rounded-2xl"
         style={{ background: "var(--surface-2)", boxShadow: "var(--soft-1)" }}
       >
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-3">
           {logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={logoUrl}
               alt={companyName}
-              className="w-8 h-8 rounded-xl object-cover shrink-0"
+              className="w-14 h-14 rounded-2xl object-cover shrink-0"
               style={{ boxShadow: "var(--soft-press-sm)" }}
             />
           ) : (
             <div
-              className="w-8 h-8 rounded-xl flex items-center justify-center text-white shrink-0"
+              className="w-14 h-14 rounded-2xl flex items-center justify-center text-white shrink-0"
               style={{
                 background: "linear-gradient(135deg, var(--brand), var(--accent))",
                 boxShadow: "var(--glow-brand)",
               }}
             >
-              <Sparkles size={14} />
+              <Sparkles size={22} />
             </div>
           )}
           <div className="min-w-0 flex-1">

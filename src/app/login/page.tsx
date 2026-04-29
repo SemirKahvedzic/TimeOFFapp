@@ -10,7 +10,9 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const company = await getCompany().catch(() => null);
-  const lang: Lang = (company?.language as Lang) ?? "en";
+  // Language is per-user; on the login page there is no session, so fall
+  // back to English for the tab title.
+  const lang: Lang = "en";
   const name = company?.name ?? "TimeOff";
   return { title: `${translate(lang, "btn.signIn")} · ${name}` };
 }

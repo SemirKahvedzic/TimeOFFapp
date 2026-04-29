@@ -61,18 +61,18 @@ export function LoginForm({ companyName, logoUrl }: LoginFormProps) {
             <img
               src={logoUrl}
               alt={companyName}
-              className="w-16 h-16 rounded-3xl object-cover mb-4"
+              className="w-28 h-28 rounded-[28px] object-cover mb-5"
               style={{ boxShadow: "var(--soft-2)" }}
             />
           ) : (
             <div
-              className="w-14 h-14 rounded-3xl flex items-center justify-center text-white mb-4"
+              className="w-24 h-24 rounded-[28px] flex items-center justify-center text-white mb-5"
               style={{
                 background: "linear-gradient(135deg, var(--brand), var(--accent))",
                 boxShadow: "var(--glow-brand)",
               }}
             >
-              <Sparkles size={22} />
+              <Sparkles size={40} />
             </div>
           )}
           <h1 className="text-2xl font-extrabold tracking-tight text-center" style={{ color: "var(--ink)" }}>
@@ -144,29 +144,6 @@ export function LoginForm({ companyName, logoUrl }: LoginFormProps) {
             )}
           </button>
         </form>
-
-        <div className="mt-7 pt-5" style={{ borderTop: "1px solid var(--line)" }}>
-          <p
-            className="text-[10px] font-bold uppercase tracking-[0.2em] mb-3 text-center"
-            style={{ color: "var(--ink-mute)" }}
-          >
-            {t("login.demoTitle")}
-          </p>
-          <div className="grid grid-cols-2 gap-2.5">
-            <DemoBtn
-              label={t("login.role.admin")}
-              email="admin@company.com"
-              pw="admin123"
-              onClick={() => { setEmail("admin@company.com"); setPassword("admin123"); }}
-            />
-            <DemoBtn
-              label={t("login.role.employee")}
-              email="sarah@company.com"
-              pw="employee123"
-              onClick={() => { setEmail("sarah@company.com"); setPassword("employee123"); }}
-            />
-          </div>
-        </div>
       </div>
     </div>
   );
@@ -191,19 +168,3 @@ function FloatingBlob({
   );
 }
 
-function DemoBtn({
-  label, email, pw, onClick,
-}: { label: string; email: string; pw: string; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      type="button"
-      className="rounded-2xl px-3 py-2.5 text-left transition-all active:scale-[0.98]"
-      style={{ background: "var(--surface)", boxShadow: "var(--soft-press-sm)" }}
-    >
-      <p className="text-[11px] font-bold" style={{ color: "var(--brand)" }}>{label}</p>
-      <p className="text-[10px] mt-0.5 truncate" style={{ color: "var(--ink-mute)" }}>{email}</p>
-      <p className="text-[10px] truncate" style={{ color: "var(--ink-faint)" }}>{pw}</p>
-    </button>
-  );
-}
