@@ -17,7 +17,9 @@ primary_region = "fra"          # Frankfurt — pick what's closest to your user
 # Run `prisma migrate deploy` once per release before traffic shifts to the new
 # machines. The standalone runner image carries the Prisma CLI for this reason.
 [deploy]
-  release_command = "npx prisma migrate deploy"
+  # Invoke the CLI by file path so we don't depend on node_modules/.bin/
+  # symlinks (which the Dockerfile's COPY doesn't carry into the runner).
+  release_command = "node node_modules/prisma/build/index.js migrate deploy"
 
 [build]
   dockerfile = "Dockerfile"
