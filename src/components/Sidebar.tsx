@@ -41,7 +41,7 @@ export function Sidebar({ companyName, companyTagline, logoUrl }: SidebarProps) 
 
   return (
     <aside
-      className="w-64 shrink-0 flex flex-col h-screen sticky top-0 px-3.5 py-4"
+      className="w-72 shrink-0 flex flex-col h-screen sticky top-0 px-3.5 py-4"
       style={{ background: "var(--bg)" }}
     >
       {/* ── Brand ── */}

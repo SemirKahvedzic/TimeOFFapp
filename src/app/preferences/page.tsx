@@ -8,23 +8,32 @@ import { useT } from "@/lib/i18n/context";
 import { LANGUAGES, LANGUAGE_LABELS, type Lang } from "@/lib/i18n/messages";
 import { usePageTitle } from "@/lib/usePageTitle";
 
-type ThemeOverride = "light" | "dark" | "";    // "" = use company default
-type LanguageOverride = Lang | "";              // "" = use company default
+type ThemeChoiceValue = "light" | "dark";
 
 export default function PreferencesPage() {
   usePageTitle("nav.preferences");
   const t = useT();
-  const [theme, setTheme] = useState<ThemeOverride>("");
-  const [language, setLanguage] = useState<LanguageOverride>("");
+  const [theme, setTheme] = useState<ThemeChoiceValue>("light");
+  const [language, setLanguage] = useState<Lang>("en");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    // Default to whatever the layout already resolved for this user, so the
+    // form reflects the currently visible theme/language even if the user has
+    // no explicit preference saved yet.
+    const htmlTheme = document.documentElement.dataset.theme;
+    const resolvedTheme: ThemeChoiceValue = htmlTheme === "dark" ? "dark" : "light";
+    const htmlLang = document.documentElement.lang;
+    const resolvedLang: Lang = (LANGUAGES as readonly string[]).includes(htmlLang)
+      ? (htmlLang as Lang)
+      : "en";
+
     fetch("/api/me/preferences")
       .then((r) => r.json())
       .then((data: { theme: string | null; language: string | null }) => {
-        setTheme((data.theme as ThemeOverride) ?? "");
-        setLanguage((data.language as LanguageOverride) ?? "");
+        setTheme((data.theme as ThemeChoiceValue) ?? resolvedTheme);
+        setLanguage((data.language as Lang) ?? resolvedLang);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -36,10 +45,7 @@ export default function PreferencesPage() {
       const res = await fetch("/api/me/preferences", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          theme: theme === "" ? null : theme,
-          language: language === "" ? null : language,
-        }),
+        body: JSON.stringify({ theme, language }),
       });
       if (!res.ok) throw new Error("Failed");
       toast.success(t("prefs.saved"));
@@ -81,14 +87,9 @@ export default function PreferencesPage() {
             <div>
               <FieldLabel>{t("prefs.theme")}</FieldLabel>
               <div
-                className="grid grid-cols-3 gap-2 p-1 rounded-2xl"
+                className="grid grid-cols-2 gap-2 p-1 rounded-2xl"
                 style={{ background: "var(--surface)", boxShadow: "var(--soft-press-sm)" }}
               >
-                <ThemeChoice
-                  active={theme === ""}
-                  onClick={() => setTheme("")}
-                  label={t("prefs.useCompany")}
-                />
                 <ThemeChoice
                   active={theme === "light"}
                   onClick={() => setTheme("light")}
@@ -114,10 +115,9 @@ export default function PreferencesPage() {
                 />
                 <Select
                   value={language}
-                  onChange={(e) => setLanguage(e.target.value as LanguageOverride)}
+                  onChange={(e) => setLanguage(e.target.value as Lang)}
                   style={{ paddingLeft: 38 }}
                 >
-                  <option value="">— {t("prefs.useCompany")} —</option>
                   {LANGUAGES.map((l) => (
                     <option key={l} value={l}>{LANGUAGE_LABELS[l]}</option>
                   ))}
