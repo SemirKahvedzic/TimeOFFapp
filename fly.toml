@@ -19,7 +19,10 @@ primary_region = "fra"          # Frankfurt — pick what's closest to your user
 [deploy]
   # Invoke the CLI by file path so we don't depend on node_modules/.bin/
   # symlinks (which the Dockerfile's COPY doesn't carry into the runner).
-  release_command = "node node_modules/prisma/build/index.js migrate deploy"
+  # Use `db push` (not `migrate deploy`) since the repo has no committed
+  # migration files yet — db push syncs the schema directly. Switch to
+  # `migrate deploy` once prisma/migrations/ is populated.
+  release_command = "node node_modules/prisma/build/index.js db push --skip-generate"
 
 [build]
   dockerfile = "Dockerfile"

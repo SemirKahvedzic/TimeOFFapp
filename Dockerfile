@@ -35,6 +35,11 @@ RUN npm run build
 FROM base AS runner
 WORKDIR /app
 
+# Prisma's schema engine (used by `migrate deploy` / `db push`) is a native
+# binary linked against libssl + libc. Without these the engine fails to
+# load before it can print a useful error message.
+RUN apk add --no-cache libc6-compat openssl
+
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
