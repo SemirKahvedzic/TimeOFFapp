@@ -1,11 +1,12 @@
+import "dotenv/config";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { PrismaClient } = require("@prisma/client");
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { PrismaBetterSqlite3 } = require("@prisma/adapter-better-sqlite3");
+const { PrismaPg } = require("@prisma/adapter-pg");
 import bcrypt from "bcryptjs";
 
-const adapter = new PrismaBetterSqlite3({ url: process.env.DATABASE_URL ?? "file:./dev.db" });
-const prisma = new PrismaClient({ adapter });
+const adapter = new PrismaPg(process.env.DATABASE_URL);
+const prisma = new PrismaClient({ adapter, log: ["error"] });
 
 const LEAVE_TYPES = [
   { key: "vacation",   label: "Vacation",     emoji: "🌴", color: "#10b981", defaultAllowance: 20, paid: true,  order: 1 },
