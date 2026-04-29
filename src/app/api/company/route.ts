@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -29,5 +30,12 @@ export async function PATCH(req: NextRequest) {
   const auditPayload = { ...data };
   if ("logoUrl" in auditPayload) auditPayload.logoUrl = data.logoUrl ? "[updated]" : null;
   await audit({ actorId: session.user.id, action: "company.updated", targetType: "Company", targetId: company.id, metadata: auditPayload });
+
+  // The root layout reads brand colors, theme, and language from the company
+  // and bakes them into <html data-theme>, the brand CSS vars, and the
+  // LanguageProvider. Invalidate the RSC cache so the next render — whether
+  // from a reload or client-side navigation — pulls fresh values.
+  revalidatePath("/", "layout");
+
   return NextResponse.json(updated);
 }

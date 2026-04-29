@@ -249,6 +249,22 @@ function BrandSection({ company, onSaved }: { company: Company; onSaved: () => v
   const [logoUrl, setLogoUrl] = useState<string | null>(company.logoUrl);
   const [saving, setSaving] = useState(false);
 
+  // True if any field differs from what the server last returned. Comparing
+  // workWeek as a sorted comma-string keeps it consistent with how the API
+  // serializes it, so re-saving the same days never registers as dirty.
+  const workWeekStr = Array.from(workWeek).sort((a, b) => a - b).join(",");
+  const isDirty =
+    name !== company.name ||
+    tagline !== (company.tagline ?? "") ||
+    brandColor !== company.brandColor ||
+    accentColor !== company.accentColor ||
+    theme !== company.theme ||
+    language !== company.language ||
+    workWeekStr !== company.workWeek ||
+    timeZone !== company.timeZone ||
+    countryCode !== company.countryCode ||
+    logoUrl !== company.logoUrl;
+
   function toggleDay(d: number) {
     const next = new Set(workWeek);
     if (next.has(d)) next.delete(d); else next.add(d);
@@ -285,7 +301,11 @@ function BrandSection({ company, onSaved }: { company: Company; onSaved: () => v
       });
       if (!res.ok) throw new Error("Failed");
       toast.success(t("settings.brand.toast.saved"));
-      onSaved();
+
+      // Brand colors, theme, language, and logo all flow through the root
+      // layout's server render. Hard-reload so the new values land in
+      // <html data-theme>, the brand CSS vars, and the LanguageProvider.
+      window.location.reload();
     } catch {
       toast.error(t("settings.brand.toast.saveFailed"));
     } finally {
@@ -478,7 +498,7 @@ function BrandSection({ company, onSaved }: { company: Company; onSaved: () => v
         </div>
       </div>
 
-      <Button onClick={save} loading={saving} size="lg">
+      <Button onClick={save} loading={saving} disabled={!isDirty} size="lg">
         <Save size={15} />
         {t("btn.save")}
       </Button>

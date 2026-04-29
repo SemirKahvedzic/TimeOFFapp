@@ -43,6 +43,12 @@ export default function PreferencesPage() {
       });
       if (!res.ok) throw new Error("Failed");
       toast.success(t("prefs.saved"));
+
+      // The root layout reads theme + language on the server and bakes them
+      // into <html data-theme>, <html lang>, and the LanguageProvider context.
+      // router.refresh() didn't reliably propagate the new values in Next 16,
+      // so we do a hard reload — heavy-handed but bulletproof.
+      window.location.reload();
     } catch {
       toast.error(t("prefs.saveFailed"));
     } finally {

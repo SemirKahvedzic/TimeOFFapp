@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -59,6 +60,12 @@ export async function PATCH(req: NextRequest) {
     targetId: session.user.id,
     metadata: data,
   });
+
+  // The root layout reads the user's theme + language and bakes them into
+  // <html data-theme>, <html lang>, and the LanguageProvider. Invalidating
+  // the layout cache makes router.refresh() on the client return a fresh
+  // tree with the new values instead of the stale cached payload.
+  revalidatePath("/", "layout");
 
   return NextResponse.json(updated);
 }
