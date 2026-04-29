@@ -10,6 +10,7 @@ import { Avatar } from "@/components/Avatar";
 import { formatDate } from "@/lib/utils";
 import { sendInvitationEmail } from "@/lib/email";
 import { useT } from "@/lib/i18n/context";
+import { usePageTitle } from "@/lib/usePageTitle";
 
 interface User {
   id: string;
@@ -29,6 +30,7 @@ interface Department {
 }
 
 export default function AdminUsersPage() {
+  usePageTitle("nav.team");
   const t = useT();
   const [users, setUsers] = useState<User[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -79,7 +81,7 @@ export default function AdminUsersPage() {
       setJobTitle(""); setDepartmentId(""); setManagerId("");
       fetchAll();
       sendInvitationEmail(savedName, savedEmail, savedPassword).catch(() => {
-        toast.error("Member created but invite email failed");
+        toast.error(t("users.toast.inviteEmailFailed"));
       });
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Failed");
@@ -124,7 +126,7 @@ export default function AdminUsersPage() {
 
       <div className="rounded-3xl" style={{ background: "var(--surface-2)", boxShadow: "var(--soft-1)" }}>
         {loading ? (
-          <div className="py-12 text-center text-sm" style={{ color: "var(--ink-mute)" }}>Loading…</div>
+          <div className="py-12 text-center text-sm" style={{ color: "var(--ink-mute)" }}>{t("common.loading")}</div>
         ) : (
           <div className="divide-y" style={{ borderColor: "var(--line)" }}>
             {users.map((u) => (

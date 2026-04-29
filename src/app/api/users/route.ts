@@ -48,15 +48,16 @@ export async function POST(req: NextRequest) {
     select: { id: true, name: true, email: true, role: true, jobTitle: true, createdAt: true, departmentId: true, managerId: true },
   });
 
-  // Auto-create leave balances based on each leave type's defaultAllowance
+  // Auto-create a balance row for every active leave type so the new
+  // user sees the full set on their dashboard. Types without a
+  // defaultAllowance get allowance=0 (admin can adjust later).
   const year = new Date().getFullYear();
   const types = await prisma.leaveType.findMany({ where: { archived: false } });
   for (const t of types) {
-    if (t.defaultAllowance == null) continue;
     await prisma.leaveBalance.upsert({
       where: { userId_leaveTypeId_year: { userId: user.id, leaveTypeId: t.id, year } },
       update: {},
-      create: { userId: user.id, leaveTypeId: t.id, year, allowance: t.defaultAllowance, used: 0 },
+      create: { userId: user.id, leaveTypeId: t.id, year, allowance: t.defaultAllowance ?? 0, used: 0 },
     });
   }
 

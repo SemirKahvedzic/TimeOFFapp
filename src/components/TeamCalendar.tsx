@@ -4,7 +4,7 @@ import {
   format, startOfMonth, endOfMonth, eachDayOfInterval, getDay,
   isSameMonth, isToday, isSameDay, min, max, differenceInCalendarDays,
 } from "date-fns";
-import { ChevronLeft, ChevronRight, CalendarPlus, X, Users, MessageSquare, PartyPopper } from "lucide-react";
+import { ChevronLeft, ChevronRight, CalendarPlus, X, Users, MessageSquare, PartyPopper, LayoutGrid, List as ListIcon, Inbox } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { Modal } from "./ui/Modal";
 import { RequestForm } from "./RequestForm";
@@ -63,10 +63,13 @@ interface TeamCalendarProps {
   onRequestCreated?: () => void;
 }
 
+type ViewMode = "month" | "list";
+
 export function TeamCalendar({ onRequestCreated }: TeamCalendarProps) {
   const { data: session } = useSession();
   const t = useT();
   const [current, setCurrent] = useState(new Date());
+  const [view, setView] = useState<ViewMode>("month");
   const [requests, setRequests] = useState<CalendarRequest[]>([]);
   const [holidays, setHolidays] = useState<CalendarHoliday[]>([]);
   const [attendances, setAttendances] = useState<AttendanceEntry[]>([]);
@@ -165,38 +168,69 @@ export function TeamCalendar({ onRequestCreated }: TeamCalendarProps) {
         .filter((d) => isWorkDay(d) && !holidayMap.has(dayStr(d))).length
     : 0;
 
+  function switchView(next: ViewMode) {
+    if (next === view) return;
+    if (next === "list") clearSelection();
+    setView(next);
+  }
+
   return (
     <div ref={calendarRef} className="space-y-4" onMouseLeave={() => isSelecting && setHovered(anchor)}>
 
       {/* ── Header ── */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <h2 className="text-lg font-extrabold tracking-tight" style={{ color: "var(--ink)" }}>
           {format(current, "MMMM yyyy")}
         </h2>
-        <div
-          className="flex items-center gap-1 p-1 rounded-full"
-          style={{ background: "var(--surface)", boxShadow: "var(--soft-press-sm)" }}
-        >
-          <NavBtn onClick={() => setCurrent(new Date(current.getFullYear(), current.getMonth() - 1))}>
-            <ChevronLeft size={14} />
-          </NavBtn>
-          <button
-            onClick={() => setCurrent(new Date())}
-            className="px-3 py-1 text-[11px] font-bold rounded-full transition-all"
-            style={{ color: "var(--ink-soft)" }}
+        <div className="flex items-center gap-2">
+          <div
+            className="flex items-center gap-1 p-1 rounded-full"
+            style={{ background: "var(--surface)", boxShadow: "var(--soft-press-sm)" }}
           >
-            {t("cal.today")}
-          </button>
-          <NavBtn onClick={() => setCurrent(new Date(current.getFullYear(), current.getMonth() + 1))}>
-            <ChevronRight size={14} />
-          </NavBtn>
+            <ViewBtn active={view === "month"} onClick={() => switchView("month")} icon={<LayoutGrid size={12} />}>
+              {t("cal.view.month")}
+            </ViewBtn>
+            <ViewBtn active={view === "list"} onClick={() => switchView("list")} icon={<ListIcon size={12} />}>
+              {t("cal.view.list")}
+            </ViewBtn>
+          </div>
+          <div
+            className="flex items-center gap-1 p-1 rounded-full"
+            style={{ background: "var(--surface)", boxShadow: "var(--soft-press-sm)" }}
+          >
+            <NavBtn onClick={() => setCurrent(new Date(current.getFullYear(), current.getMonth() - 1))}>
+              <ChevronLeft size={14} />
+            </NavBtn>
+            <button
+              onClick={() => setCurrent(new Date())}
+              className="px-3 py-1 text-[11px] font-bold rounded-full transition-all"
+              style={{ color: "var(--ink-soft)" }}
+            >
+              {t("cal.today")}
+            </button>
+            <NavBtn onClick={() => setCurrent(new Date(current.getFullYear(), current.getMonth() + 1))}>
+              <ChevronRight size={14} />
+            </NavBtn>
+          </div>
         </div>
       </div>
 
-      <p className={cn("text-xs transition-colors")} style={{ color: isSelecting ? "var(--brand)" : "var(--ink-mute)" }}>
-        {isSelecting ? t("cal.hint.active") : t("cal.hint.idle")}
-      </p>
+      {view === "month" && (
+        <p className={cn("text-xs transition-colors")} style={{ color: isSelecting ? "var(--brand)" : "var(--ink-mute)" }}>
+          {isSelecting ? t("cal.hint.active") : t("cal.hint.idle")}
+        </p>
+      )}
 
+      {view === "list" ? (
+        <ListView
+          current={current}
+          requests={requests}
+          holidays={holidays}
+          workDays={workDays}
+          t={t}
+        />
+      ) : (
+        <>
       {/* Weekday headers */}
       <div className="grid grid-cols-7">
         {WEEKDAY_KEYS.map((k, idx) => {
@@ -340,9 +374,11 @@ export function TeamCalendar({ onRequestCreated }: TeamCalendarProps) {
           );
         })}
       </div>
+        </>
+      )}
 
       {/* Selection panel */}
-      {confirmed && (
+      {view === "month" && confirmed && (
         <div
           className="rounded-3xl overflow-hidden"
           style={{ background: "var(--surface-2)", boxShadow: "var(--soft-2)" }}
@@ -484,5 +520,317 @@ function NavBtn({ onClick, children }: { onClick: () => void; children: React.Re
     >
       {children}
     </button>
+  );
+}
+
+function StatusChip({
+  tone, bg, label, count,
+}: {
+  tone: string;
+  bg: string;
+  label: string;
+  count: number;
+}) {
+  return (
+    <span
+      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold"
+      style={{ background: bg, color: tone }}
+    >
+      <span className="w-1.5 h-1.5 rounded-full" style={{ background: tone }} />
+      {label}
+      <span
+        className="text-[10px] font-extrabold px-1 rounded-md min-w-[16px] text-center"
+        style={{ background: "color-mix(in oklab, white 35%, transparent)", color: tone }}
+      >
+        {count}
+      </span>
+    </span>
+  );
+}
+
+function ViewBtn({
+  active, onClick, icon, children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-bold rounded-full transition-all"
+      style={
+        active
+          ? { background: "var(--brand-soft)", color: "var(--brand)", boxShadow: "var(--soft-press-sm)" }
+          : { color: "var(--ink-soft)" }
+      }
+    >
+      {icon}
+      {children}
+    </button>
+  );
+}
+
+function ListView({
+  current, requests, holidays, workDays, t,
+}: {
+  current: Date;
+  requests: CalendarRequest[];
+  holidays: CalendarHoliday[];
+  workDays: Set<number>;
+  t: (key: MessageKey, vars?: Record<string, string | number>) => string;
+}) {
+  const monthStart = startOfMonth(current);
+  const monthEnd = endOfMonth(current);
+  const monthStartStr = dayStr(monthStart);
+  const monthEndStr = dayStr(monthEnd);
+
+  const holidaySet = new Set(holidays.map((h) => isoStr(h.date)));
+
+  type Item =
+    | { kind: "holiday"; date: Date; sortKey: string; holiday: CalendarHoliday }
+    | { kind: "request"; date: Date; sortKey: string; request: CalendarRequest };
+
+  const items: Item[] = [];
+
+  for (const h of holidays) {
+    const ds = isoStr(h.date);
+    if (ds < monthStartStr || ds > monthEndStr) continue;
+    items.push({ kind: "holiday", date: new Date(`${ds}T00:00:00`), sortKey: ds, holiday: h });
+  }
+
+  for (const r of requests) {
+    const startStr = isoStr(r.startDate);
+    const endStr = isoStr(r.endDate);
+    if (endStr < monthStartStr || startStr > monthEndStr) continue;
+    const effectiveStart = startStr < monthStartStr ? monthStartStr : startStr;
+    items.push({
+      kind: "request",
+      date: new Date(`${effectiveStart}T00:00:00`),
+      sortKey: effectiveStart,
+      request: r,
+    });
+  }
+
+  items.sort((a, b) => {
+    if (a.sortKey !== b.sortKey) return a.sortKey < b.sortKey ? -1 : 1;
+    if (a.kind !== b.kind) return a.kind === "holiday" ? -1 : 1;
+    return 0;
+  });
+
+  type Total = { user: { id: string; name: string }; count: number; color: string };
+  const totalsByUser = new Map<string, Total>();
+  for (const r of requests) {
+    if (r.status === "rejected") continue;
+    const startStr = isoStr(r.startDate);
+    const endStr = isoStr(r.endDate);
+    if (endStr < monthStartStr || startStr > monthEndStr) continue;
+    const overlapStart = startStr < monthStartStr ? monthStart : new Date(`${startStr}T00:00:00`);
+    const overlapEnd = endStr > monthEndStr ? monthEnd : new Date(`${endStr}T00:00:00`);
+    let workingDays = 0;
+    for (const d of eachDayOfInterval({ start: overlapStart, end: overlapEnd })) {
+      if (workDays.has(d.getDay()) && !holidaySet.has(dayStr(d))) workingDays++;
+    }
+    if (workingDays === 0) continue;
+    const existing = totalsByUser.get(r.user.id);
+    if (existing) {
+      existing.count += workingDays;
+    } else {
+      totalsByUser.set(r.user.id, {
+        user: { id: r.user.id, name: r.user.name },
+        count: workingDays,
+        color: r.leaveType?.color ?? "#10b981",
+      });
+    }
+  }
+  const totals = Array.from(totalsByUser.values()).sort((a, b) => b.count - a.count);
+
+  const statusCounts = { approved: 0, pending: 0, rejected: 0 };
+  for (const r of requests) {
+    const startStr = isoStr(r.startDate);
+    const endStr = isoStr(r.endDate);
+    if (endStr < monthStartStr || startStr > monthEndStr) continue;
+    if (r.status === "approved" || r.status === "pending" || r.status === "rejected") {
+      statusCounts[r.status as "approved" | "pending" | "rejected"]++;
+    }
+  }
+
+  if (items.length === 0) {
+    return (
+      <div className="py-12 flex flex-col items-center text-center">
+        <div
+          className="w-14 h-14 rounded-2xl flex items-center justify-center mb-3"
+          style={{ background: "var(--surface)", boxShadow: "var(--soft-press-sm)" }}
+        >
+          <Inbox size={22} style={{ color: "var(--ink-mute)" }} />
+        </div>
+        <p className="text-sm font-semibold" style={{ color: "var(--ink-soft)" }}>
+          {t("cal.list.empty")}
+        </p>
+      </div>
+    );
+  }
+
+  const grouped = new Map<string, Item[]>();
+  for (const it of items) {
+    const arr = grouped.get(it.sortKey) ?? [];
+    arr.push(it);
+    grouped.set(it.sortKey, arr);
+  }
+
+  return (
+    <div className="space-y-4">
+      {totals.length > 0 && (
+        <div
+          className="rounded-2xl px-4 py-3"
+          style={{ background: "var(--surface)", boxShadow: "var(--soft-press-sm)" }}
+        >
+          <div className="flex items-center justify-between gap-3 flex-wrap mb-2.5">
+            <div className="flex items-center gap-1.5">
+              <Users size={13} style={{ color: "var(--ink-mute)" }} />
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: "var(--ink-mute)" }}>
+                {t("cal.list.totals")}
+              </p>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <StatusChip
+                tone="var(--ok)"
+                bg="var(--ok-bg)"
+                label={t("status.approved")}
+                count={statusCounts.approved}
+              />
+              <StatusChip
+                tone="var(--warn)"
+                bg="var(--warn-bg)"
+                label={t("status.pending")}
+                count={statusCounts.pending}
+              />
+              <StatusChip
+                tone="var(--err)"
+                bg="var(--err-bg)"
+                label={t("status.rejected")}
+                count={statusCounts.rejected}
+              />
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {totals.map((tot) => (
+              <div
+                key={tot.user.id}
+                className="inline-flex items-center gap-2 pl-1 pr-3 py-1 rounded-full"
+                style={{ background: "var(--surface-2)", boxShadow: "var(--soft-press-sm)" }}
+              >
+                <Avatar name={tot.user.name} size={22} className="rounded-full shrink-0" />
+                <span className="text-[12px] font-bold" style={{ color: "var(--ink)" }}>
+                  {tot.user.name}
+                </span>
+                <span
+                  className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-md"
+                  style={{ background: `color-mix(in oklab, ${tot.color} 22%, transparent)`, color: tot.color }}
+                >
+                  {tot.count === 1 ? t("cal.list.day", { count: tot.count }) : t("cal.list.days", { count: tot.count })}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-3">
+      {Array.from(grouped.entries()).map(([key, group]) => {
+        const date = group[0].date;
+        const today = isToday(date);
+        return (
+          <div
+            key={key}
+            className="flex gap-3 sm:gap-4 p-3 sm:p-4 rounded-2xl"
+            style={{ background: "var(--surface)", boxShadow: "var(--soft-press-sm)" }}
+          >
+            <div
+              className="flex flex-col items-center justify-center shrink-0 rounded-2xl px-3 py-2 min-w-[64px]"
+              style={
+                today
+                  ? { background: "var(--brand)", color: "white", boxShadow: "var(--glow-brand)" }
+                  : { background: "var(--surface-2)", color: "var(--ink)" }
+              }
+            >
+              <span className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ opacity: 0.85 }}>
+                {format(date, "EEE")}
+              </span>
+              <span className="text-2xl font-black leading-none mt-0.5">{format(date, "d")}</span>
+            </div>
+            <div className="flex-1 min-w-0 space-y-2">
+              {group.map((it) => {
+                if (it.kind === "holiday") {
+                  return (
+                    <div
+                      key={`h-${it.holiday.id}`}
+                      className="flex items-center gap-2 px-3 py-2 rounded-xl"
+                      style={{ background: "color-mix(in oklab, var(--accent) 18%, var(--surface-2))" }}
+                    >
+                      <PartyPopper size={14} style={{ color: "var(--accent)" }} className="shrink-0" />
+                      <p className="text-sm font-bold flex-1 truncate" style={{ color: "var(--ink)" }}>
+                        {it.holiday.name}
+                      </p>
+                      <span
+                        className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md"
+                        style={{ background: "var(--accent)", color: "white" }}
+                      >
+                        {t("cal.list.holiday")}
+                      </span>
+                    </div>
+                  );
+                }
+                const r = it.request;
+                const color = r.leaveType?.color ?? "#10b981";
+                const sameDay = isoStr(r.startDate) === isoStr(r.endDate);
+                return (
+                  <div
+                    key={`r-${r.id}`}
+                    className={cn(
+                      "flex items-center gap-2.5 px-3 py-2 rounded-xl",
+                      r.status === "rejected" && "opacity-50",
+                      r.status === "pending" && "opacity-90"
+                    )}
+                    style={{ background: `color-mix(in oklab, ${color} 12%, var(--surface-2))` }}
+                  >
+                    <Avatar name={r.user.name} size={28} className="rounded-full shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span
+                          className={cn(
+                            "text-sm font-bold truncate",
+                            r.status === "rejected" && "line-through"
+                          )}
+                          style={{ color: "var(--ink)" }}
+                        >
+                          {r.user.name}
+                        </span>
+                        <Pill
+                          label={`${r.leaveType?.emoji ?? "🌴"} ${r.leaveType?.label ?? "Vacation"}`}
+                          color={color}
+                        />
+                      </div>
+                      <p className="text-[11px] mt-0.5" style={{ color: "var(--ink-mute)" }}>
+                        {sameDay
+                          ? format(new Date(r.startDate), "MMM d")
+                          : `${format(new Date(r.startDate), "MMM d")} → ${format(new Date(r.endDate), "MMM d")}`}
+                      </p>
+                    </div>
+                    <span
+                      className="w-2 h-2 rounded-full shrink-0"
+                      style={{ background: STATUS_DOT[r.status] ?? "var(--ink-mute)" }}
+                      title={r.status}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+      </div>
+    </div>
   );
 }

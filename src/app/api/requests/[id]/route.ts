@@ -24,15 +24,21 @@ async function recomputeBalanceFor(userId: string, leaveTypeId: string, year: nu
     halfDayStart: r.halfDayStart, halfDayEnd: r.halfDayEnd,
   }), 0);
 
-  const existing = await prisma.leaveBalance.findUnique({
-    where: { userId_leaveTypeId_year: { userId, leaveTypeId, year } },
+  const leaveType = await prisma.leaveType.findUnique({
+    where: { id: leaveTypeId },
+    select: { defaultAllowance: true },
   });
-  if (existing) {
-    await prisma.leaveBalance.update({
-      where: { userId_leaveTypeId_year: { userId, leaveTypeId, year } },
-      data: { used },
-    });
-  }
+  await prisma.leaveBalance.upsert({
+    where: { userId_leaveTypeId_year: { userId, leaveTypeId, year } },
+    update: { used },
+    create: {
+      userId,
+      leaveTypeId,
+      year,
+      allowance: leaveType?.defaultAllowance ?? 0,
+      used,
+    },
+  });
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

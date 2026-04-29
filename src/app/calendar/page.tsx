@@ -1,8 +1,10 @@
 "use client";
 import { TeamCalendar } from "@/components/TeamCalendar";
 import { useT } from "@/lib/i18n/context";
+import { usePageTitle } from "@/lib/usePageTitle";
 
 export default function CalendarPage() {
+  usePageTitle("nav.calendar");
   const t = useT();
   return (
     <div className="space-y-5">

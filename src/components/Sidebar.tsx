@@ -4,24 +4,25 @@ import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import {
   LayoutDashboard, Calendar, Users, LogOut, BarChart3, CalendarCheck,
-  Settings, PieChart, Sparkles,
+  Settings, PieChart, Sparkles, SlidersHorizontal,
 } from "lucide-react";
 import { Avatar } from "./Avatar";
 import { useT } from "@/lib/i18n/context";
 import type { MessageKey } from "@/lib/i18n/messages";
 
 const employeeNav: { href: string; key: MessageKey; icon: React.ElementType }[] = [
-  { href: "/dashboard", key: "nav.home",     icon: LayoutDashboard },
-  { href: "/calendar",  key: "nav.calendar", icon: Calendar },
+  { href: "/dashboard",   key: "nav.home",        icon: LayoutDashboard },
+  { href: "/calendar",    key: "nav.calendar",    icon: Calendar },
+  { href: "/preferences", key: "nav.preferences", icon: SlidersHorizontal },
 ];
 
 const adminNav: { href: string; key: MessageKey; icon: React.ElementType }[] = [
-  { href: "/admin",          key: "nav.overview", icon: BarChart3 },
-  { href: "/admin/requests", key: "nav.requests", icon: CalendarCheck },
-  { href: "/calendar",       key: "nav.calendar", icon: Calendar },
-  { href: "/admin/users",    key: "nav.team",     icon: Users },
-  { href: "/admin/reports",  key: "nav.reports",  icon: PieChart },
-  { href: "/admin/settings", key: "nav.settings", icon: Settings },
+  { href: "/admin",          key: "nav.overview",    icon: BarChart3 },
+  { href: "/admin/requests", key: "nav.requests",    icon: CalendarCheck },
+  { href: "/calendar",       key: "nav.calendar",    icon: Calendar },
+  { href: "/admin/users",    key: "nav.team",        icon: Users },
+  { href: "/admin/reports",  key: "nav.reports",     icon: PieChart },
+  { href: "/admin/settings", key: "nav.settings",    icon: Settings },
 ];
 
 interface SidebarProps {

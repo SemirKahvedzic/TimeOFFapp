@@ -43,8 +43,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
 
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
+  // Parse "YYYY-MM-DD" as UTC midnight so the stored ISO date string and
+  // the calendar's day key (which slices iso.slice(0, 10)) always agree.
+  // Doing `new Date(date)` then `setHours(0,0,0,0)` shifts to local midnight,
+  // which in any non-UTC zone changes the calendar day in the ISO string.
+  const d = /^\d{4}-\d{2}-\d{2}$/.test(date)
+    ? new Date(`${date}T00:00:00.000Z`)
+    : new Date(date);
 
   const record = await prisma.attendance.upsert({
     where: { userId_date: { userId: session.user.id, date: d } },

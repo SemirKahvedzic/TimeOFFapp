@@ -9,6 +9,7 @@ import { Select, FieldLabel, Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { formatLeaveDays } from "@/lib/utils";
 import { useT } from "@/lib/i18n/context";
+import { usePageTitle } from "@/lib/usePageTitle";
 
 interface ReportData {
   year: number;
@@ -22,6 +23,7 @@ interface DepartmentOption { id: string; name: string; color: string; }
 interface UserOption       { id: string; name: string; email: string; department?: { id: string; name: string } | null; }
 
 export default function ReportsPage() {
+  usePageTitle("nav.reports");
   const t = useT();
   const [data, setData] = useState<ReportData | null>(null);
   const [departments, setDepartments] = useState<DepartmentOption[]>([]);

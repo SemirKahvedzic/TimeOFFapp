@@ -101,6 +101,8 @@ model User {
   jobTitle     String?
   phoneNumber  String?
   avatarColor  String?  // hex override; if null, deterministic gradient is used
+  theme        String?  // null = inherit Company.theme
+  language     String?  // null = inherit Company.language
   managerId    String?
   departmentId String?
   createdAt    DateTime @default(now())

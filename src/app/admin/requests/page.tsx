@@ -5,6 +5,7 @@ import { Paginator } from "@/components/ui/Paginator";
 import { Clock, CheckCircle, XCircle, ListFilter, Inbox } from "lucide-react";
 import { useT } from "@/lib/i18n/context";
 import type { MessageKey } from "@/lib/i18n/messages";
+import { usePageTitle } from "@/lib/usePageTitle";
 
 const PAGE_SIZE = 10;
 
@@ -31,6 +32,7 @@ const FILTERS: { key: string; labelKey: MessageKey; icon: React.ElementType; ton
 ];
 
 export default function AdminRequestsPage() {
+  usePageTitle("nav.requests");
   const t = useT();
   const [requests, setRequests] = useState<TimeOffRequest[]>([]);
   const [filter, setFilter] = useState("all");

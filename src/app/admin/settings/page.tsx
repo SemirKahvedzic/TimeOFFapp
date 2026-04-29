@@ -13,6 +13,7 @@ import { Pill } from "@/components/ui/Badge";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useT } from "@/lib/i18n/context";
 import { LANGUAGES, LANGUAGE_LABELS, type Lang, type MessageKey } from "@/lib/i18n/messages";
+import { usePageTitle } from "@/lib/usePageTitle";
 
 interface Company {
   id: string;
@@ -53,6 +54,7 @@ const DEFAULT_BRAND_COLOR  = "#7c5cff";
 const DEFAULT_ACCENT_COLOR = "#ff8fb1";
 
 export default function AdminSettingsPage() {
+  usePageTitle("nav.settings");
   const t = useT();
   const [section, setSection] = useState<"brand" | "types" | "holidays" | "departments" | "ical">("brand");
   const [company, setCompany] = useState<Company | null>(null);
@@ -256,16 +258,16 @@ function BrandSection({ company, onSaved }: { company: Company; onSaved: () => v
   function handleLogoFile(file: File | null) {
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      toast.error("Please choose an image file");
+      toast.error(t("settings.brand.toast.notImage"));
       return;
     }
     if (file.size > 512 * 1024) {
-      toast.error("Image is too big — keep it under 512KB");
+      toast.error(t("settings.brand.toast.tooBig"));
       return;
     }
     const reader = new FileReader();
     reader.onload = () => setLogoUrl(typeof reader.result === "string" ? reader.result : null);
-    reader.onerror = () => toast.error("Couldn't read that file");
+    reader.onerror = () => toast.error(t("settings.brand.toast.readFailed"));
     reader.readAsDataURL(file);
   }
 
@@ -282,10 +284,10 @@ function BrandSection({ company, onSaved }: { company: Company; onSaved: () => v
         }),
       });
       if (!res.ok) throw new Error("Failed");
-      toast.success("Saved — refresh to see theme & language update");
+      toast.success(t("settings.brand.toast.saved"));
       onSaved();
     } catch {
-      toast.error("Failed to save");
+      toast.error(t("settings.brand.toast.saveFailed"));
     } finally {
       setSaving(false);
     }

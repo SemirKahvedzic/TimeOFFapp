@@ -37,6 +37,26 @@ export async function POST(req: NextRequest) {
       order: order ?? 99,
     },
   });
+
+  // Fan out balances to all existing users for the current year so the
+  // new type shows up immediately on their dashboards. Use 0 when
+  // defaultAllowance is null so the type still appears.
+  {
+    const year = new Date().getFullYear();
+    const users = await prisma.user.findMany({ select: { id: true } });
+    if (users.length > 0) {
+      await prisma.leaveBalance.createMany({
+        data: users.map((u) => ({
+          userId: u.id,
+          leaveTypeId: created.id,
+          year,
+          allowance: created.defaultAllowance ?? 0,
+          used: 0,
+        })),
+      });
+    }
+  }
+
   await audit({ actorId: session.user.id, action: "leave_type.created", targetType: "LeaveType", targetId: created.id, metadata: created });
   return NextResponse.json(created, { status: 201 });
 }

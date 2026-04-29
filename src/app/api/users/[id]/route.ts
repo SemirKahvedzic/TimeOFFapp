@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { audit } from "@/lib/audit";
+import type { Prisma } from "@prisma/client";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
@@ -11,9 +12,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
   const { id } = await params;
   const body = await req.json();
-  const allowed = ["name", "jobTitle", "role", "departmentId", "managerId", "phoneNumber"] as const;
-  const data: Record<string, unknown> = {};
-  for (const k of allowed) if (k in body) data[k] = body[k];
+  const data: Prisma.UserUpdateInput = {};
+  if ("name" in body)         data.name = body.name;
+  if ("jobTitle" in body)     data.jobTitle = body.jobTitle;
+  if ("role" in body)         data.role = body.role;
+  if ("departmentId" in body) data.department = body.departmentId ? { connect: { id: body.departmentId } } : { disconnect: true };
+  if ("managerId" in body)    data.manager    = body.managerId    ? { connect: { id: body.managerId    } } : { disconnect: true };
+  if ("phoneNumber" in body)  data.phoneNumber = body.phoneNumber;
 
   const updated = await prisma.user.update({ where: { id }, data });
   await audit({ actorId: session.user.id, action: "user.updated", targetType: "User", targetId: id, metadata: data });

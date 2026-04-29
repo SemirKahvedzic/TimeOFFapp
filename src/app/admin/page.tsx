@@ -9,6 +9,7 @@ import { Avatar } from "@/components/Avatar";
 import { Pill } from "@/components/ui/Badge";
 import { formatDate } from "@/lib/utils";
 import { useT } from "@/lib/i18n/context";
+import { usePageTitle } from "@/lib/usePageTitle";
 
 interface TimeOffRequest {
   id: string;
@@ -60,6 +61,7 @@ function KpiTile({
 }
 
 export default function AdminDashboard() {
+  usePageTitle("nav.overview");
   const t = useT();
   const [requests, setRequests] = useState<TimeOffRequest[]>([]);
   const [loading,  setLoading]  = useState(true);
@@ -76,7 +78,7 @@ export default function AdminDashboard() {
 
   async function handleExport() {
     const res = await fetch("/api/export");
-    if (!res.ok) { toast.error("Export failed"); return; }
+    if (!res.ok) { toast.error(t("admin.export.fail")); return; }
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -84,7 +86,7 @@ export default function AdminDashboard() {
     a.download = `time-off-${new Date().toISOString().split("T")[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success("Exported");
+    toast.success(t("admin.export.success"));
   }
 
   const pending  = requests.filter((r) => r.status === "pending");

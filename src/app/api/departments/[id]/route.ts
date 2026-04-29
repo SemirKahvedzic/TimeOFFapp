@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { audit } from "@/lib/audit";
+import type { Prisma } from "@prisma/client";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
@@ -11,7 +12,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
   const { id } = await params;
   const { name, color } = await req.json();
-  const data: Record<string, unknown> = {};
+  const data: Prisma.DepartmentUpdateInput = {};
   if (name) data.name = name;
   if (color) data.color = color;
   const updated = await prisma.department.update({ where: { id }, data });

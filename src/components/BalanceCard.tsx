@@ -28,7 +28,7 @@ export function BalanceCard() {
       .catch(() => setLoading(false));
   }, []);
 
-  const visible = balances.filter((b) => b.allowance > 0);
+  const visible = balances;
 
   if (loading) {
     return (

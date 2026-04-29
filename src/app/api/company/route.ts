@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getCompany } from "@/lib/company";
 import { audit } from "@/lib/audit";
+import type { Prisma } from "@prisma/client";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -20,7 +21,7 @@ export async function PATCH(req: NextRequest) {
   const body = await req.json();
   const company = await getCompany();
   const allowed = ["name", "tagline", "logoUrl", "brandColor", "accentColor", "theme", "language", "workWeek", "countryCode", "timeZone"] as const;
-  const data: Record<string, unknown> = {};
+  const data: Prisma.CompanyUpdateInput = {};
   for (const k of allowed) if (k in body) data[k] = body[k];
 
   const updated = await prisma.company.update({ where: { id: company.id }, data });

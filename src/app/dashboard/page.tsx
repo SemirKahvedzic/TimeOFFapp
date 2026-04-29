@@ -12,6 +12,7 @@ import { UpcomingHolidays } from "@/components/UpcomingHolidays";
 import { Paginator } from "@/components/ui/Paginator";
 import { useT } from "@/lib/i18n/context";
 import type { MessageKey } from "@/lib/i18n/messages";
+import { usePageTitle } from "@/lib/usePageTitle";
 
 const PAGE_SIZE = 10;
 const FILTERS: { key: string; labelKey: MessageKey; icon: React.ElementType; tone: string; bg: string }[] = [
@@ -61,6 +62,7 @@ function MiniStat({
 }
 
 export default function EmployeeDashboard() {
+  usePageTitle("nav.home");
   const { data: session } = useSession();
   const t = useT();
   const [requests, setRequests] = useState<TimeOffRequest[]>([]);
@@ -193,7 +195,7 @@ export default function EmployeeDashboard() {
 
             <div className="px-3 pb-4 space-y-2.5">
               {loading ? (
-                <div className="py-10 text-center text-sm" style={{ color: "var(--ink-mute)" }}>Loading…</div>
+                <div className="py-10 text-center text-sm" style={{ color: "var(--ink-mute)" }}>{t("common.loading")}</div>
               ) : filtered.length === 0 ? (
                 <div className="py-10 flex flex-col items-center text-center">
                   <div
