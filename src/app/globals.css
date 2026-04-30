@@ -252,3 +252,76 @@ input[type="color"]::-moz-color-swatch            { border: none; border-radius:
   100% { opacity: 0; transform: scale(1.18); }
 }
 .burst { animation: burst-fade 700ms ease-out forwards; }
+
+/* ── Login / auth page animations ──────────────────────────────────── */
+@keyframes auth-blob-a {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%      { transform: translate(40px, -28px) scale(1.06); }
+}
+@keyframes auth-blob-b {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%      { transform: translate(-32px, 26px) scale(1.08); }
+}
+@keyframes auth-blob-c {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%      { transform: translate(22px, -18px) scale(0.94); }
+}
+@keyframes auth-card-rise {
+  0%   { opacity: 0; transform: translateY(18px) scale(0.985); }
+  100% { opacity: 1; transform: translateY(0)    scale(1); }
+}
+@keyframes auth-fade-up {
+  0%   { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes auth-logo-breathe {
+  0%, 100% { transform: scale(1);    filter: brightness(1); }
+  50%      { transform: scale(1.035); filter: brightness(1.05); }
+}
+@keyframes auth-shimmer {
+  0%   { background-position: 200% 50%; }
+  100% { background-position: -200% 50%; }
+}
+@keyframes auth-mesh-drift {
+  0%   { transform: scale(1)    translate(0, 0); }
+  50%  { transform: scale(1.06) translate(-1%, 1%); }
+  100% { transform: scale(1)    translate(0, 0); }
+}
+@keyframes auth-particle-rise {
+  0%   { transform: translate3d(0, 0, 0) scale(0.6);  opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translate3d(20px, -110vh, 0) scale(1); opacity: 0; }
+}
+
+.auth-blob-a { animation: auth-blob-a 14s ease-in-out infinite; }
+.auth-blob-b { animation: auth-blob-b 17s ease-in-out infinite; }
+.auth-blob-c { animation: auth-blob-c 21s ease-in-out infinite; }
+.auth-card   { animation: auth-card-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.auth-fade-up { animation: auth-fade-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.auth-logo   { animation: auth-logo-breathe 4.2s ease-in-out infinite; }
+.auth-shimmer {
+  background-size: 200% 100% !important;
+  animation: auth-shimmer 4.5s linear infinite;
+}
+.auth-mesh {
+  transform-origin: center;
+  animation: auth-mesh-drift 22s ease-in-out infinite;
+  will-change: transform;
+}
+.auth-particle {
+  animation-name: auth-particle-rise;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  filter: blur(0.5px);
+  box-shadow: 0 0 8px currentColor;
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-blob-a, .auth-blob-b, .auth-blob-c,
+  .auth-card, .auth-fade-up, .auth-logo, .auth-shimmer,
+  .auth-mesh, .auth-particle {
+    animation: none !important;
+  }
+}
