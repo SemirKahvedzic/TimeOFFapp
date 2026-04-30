@@ -192,16 +192,14 @@ export default function AdminUsersPage() {
                 <div className="flex items-center gap-1 shrink-0">
                   <button
                     onClick={() => openEdit(u)}
-                    className="p-2 rounded-full transition-all"
-                    style={{ color: "var(--ink-faint)" }}
+                    className="p-2 rounded-full transition-all text-[color:var(--ink-faint)] hover:text-[color:var(--brand)] hover:bg-[color:var(--brand-soft)]"
                     aria-label={t("users.edit.aria")}
                   >
                     <Pencil size={14} />
                   </button>
                   <button
                     onClick={() => setDeleteTarget({ id: u.id, name: u.name })}
-                    className="p-2 rounded-full transition-all"
-                    style={{ color: "var(--ink-faint)" }}
+                    className="p-2 rounded-full transition-all text-[color:var(--ink-faint)] hover:text-[#ef4444] hover:bg-[rgba(239,68,68,0.12)]"
                     aria-label="Remove member"
                   >
                     <Trash2 size={14} />
@@ -249,7 +247,16 @@ export default function AdminUsersPage() {
             <Button type="button" variant="secondary" className="flex-1" onClick={() => setEditTarget(null)}>
               {t("btn.cancel")}
             </Button>
-            <Button type="submit" loading={savingEdit} className="flex-1">
+            <Button
+              type="submit"
+              loading={savingEdit}
+              disabled={
+                !editTarget ||
+                !editName.trim() ||
+                (editName.trim() === editTarget.name && editRole === editTarget.role)
+              }
+              className="flex-1"
+            >
               {t("users.edit.save")}
             </Button>
           </div>

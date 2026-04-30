@@ -156,6 +156,20 @@ body {
 /* Remove the default form-control look */
 input, textarea, select, button { font: inherit; color: inherit; }
 
+/* Pointer cursor for clickable controls */
+button:not(:disabled),
+a[href],
+[role="button"]:not([aria-disabled="true"]),
+summary,
+label[for],
+select:not(:disabled) {
+  cursor: pointer;
+}
+button:disabled,
+[role="button"][aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
 input[type="date"]::-webkit-calendar-picker-indicator {
   opacity: 0.5;
   cursor: pointer;
