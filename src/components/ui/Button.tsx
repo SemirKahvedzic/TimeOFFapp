@@ -17,14 +17,14 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     };
 
     const base =
-      "relative inline-flex items-center justify-center gap-2 font-semibold rounded-full transition-all duration-150 disabled:opacity-55 disabled:cursor-not-allowed select-none active:scale-[0.98]";
+      "relative inline-flex items-center justify-center gap-2 font-semibold rounded-full transition-all duration-200 disabled:opacity-55 disabled:cursor-not-allowed select-none active:scale-[0.98] enabled:hover:-translate-y-0.5";
 
     if (variant === "primary") {
       return (
         <button
           ref={ref}
           disabled={disabled || loading}
-          className={cn(base, sizes[size], "text-white brand-glow", className)}
+          className={cn(base, sizes[size], "text-white brand-glow btn-pop", className)}
           style={{
             background: "linear-gradient(135deg, var(--brand), color-mix(in oklab, var(--brand) 70%, var(--accent)))",
           }}
@@ -41,7 +41,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         <button
           ref={ref}
           disabled={disabled || loading}
-          className={cn(base, sizes[size], "text-white", className)}
+          className={cn(base, sizes[size], "text-white btn-pop", className)}
           style={{
             background: "linear-gradient(135deg, #ff6b6b, #ef4444)",
             boxShadow: "0 12px 28px -8px rgba(239,68,68,0.45)",
@@ -59,7 +59,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         <button
           ref={ref}
           disabled={disabled || loading}
-          className={cn(base, sizes[size], "text-white", className)}
+          className={cn(base, sizes[size], "text-white btn-pop", className)}
           style={{
             background: "linear-gradient(135deg, #34d399, #10b981)",
             boxShadow: "0 12px 28px -8px rgba(16,185,129,0.4)",
@@ -77,7 +77,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         <button
           ref={ref}
           disabled={disabled || loading}
-          className={cn(base, sizes[size], "text-[color:var(--ink)] soft-pill soft-press hover:translate-y-[-1px]", className)}
+          className={cn(base, sizes[size], "text-[color:var(--ink)] soft-pill soft-press enabled:hover:shadow-[var(--soft-2)]", className)}
           {...props}
         >
           {loading && <Spinner />}
