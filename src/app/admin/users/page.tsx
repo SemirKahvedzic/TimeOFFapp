@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { UserPlus, Trash2, Shield, User as UserIcon, Briefcase } from "lucide-react";
+import { UserPlus, Trash2, Pencil, Shield, User as UserIcon, Briefcase } from "lucide-react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
@@ -37,6 +37,10 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [editTarget, setEditTarget] = useState<User | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editRole, setEditRole] = useState("employee");
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -87,6 +91,33 @@ export default function AdminUsersPage() {
       toast.error(err instanceof Error ? err.message : "Failed");
     } finally {
       setCreating(false);
+    }
+  }
+
+  function openEdit(u: User) {
+    setEditTarget(u);
+    setEditName(u.name);
+    setEditRole(u.role);
+  }
+
+  async function handleEditSave(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editTarget) return;
+    setSavingEdit(true);
+    try {
+      const res = await fetch(`/api/users/${editTarget.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: editName.trim(), role: editRole }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error);
+      toast.success(t("users.toast.updated"));
+      setEditTarget(null);
+      fetchAll();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed");
+    } finally {
+      setSavingEdit(false);
     }
   }
 
@@ -158,14 +189,24 @@ export default function AdminUsersPage() {
                     </p>
                   </div>
                 </div>
-                <button
-                  onClick={() => setDeleteTarget({ id: u.id, name: u.name })}
-                  className="p-2 rounded-full transition-all"
-                  style={{ color: "var(--ink-faint)" }}
-                  aria-label="Remove member"
-                >
-                  <Trash2 size={14} />
-                </button>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    onClick={() => openEdit(u)}
+                    className="p-2 rounded-full transition-all"
+                    style={{ color: "var(--ink-faint)" }}
+                    aria-label={t("users.edit.aria")}
+                  >
+                    <Pencil size={14} />
+                  </button>
+                  <button
+                    onClick={() => setDeleteTarget({ id: u.id, name: u.name })}
+                    className="p-2 rounded-full transition-all"
+                    style={{ color: "var(--ink-faint)" }}
+                    aria-label="Remove member"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -183,6 +224,36 @@ export default function AdminUsersPage() {
           <Button variant="secondary" className="flex-1" onClick={() => setDeleteTarget(null)}>{t("btn.cancel")}</Button>
           <Button variant="danger" className="flex-1" onClick={doDelete}>{t("users.delete.confirm")}</Button>
         </div>
+      </Modal>
+
+      <Modal
+        open={!!editTarget}
+        onClose={() => setEditTarget(null)}
+        title={t("users.edit.title")}
+        subtitle={t("users.edit.subtitle")}
+        size="sm"
+      >
+        <form onSubmit={handleEditSave} className="space-y-4">
+          <div>
+            <FieldLabel>{t("users.fields.fullName")}</FieldLabel>
+            <Input value={editName} onChange={(e) => setEditName(e.target.value)} required />
+          </div>
+          <div>
+            <FieldLabel>{t("users.fields.role")}</FieldLabel>
+            <Select value={editRole} onChange={(e) => setEditRole(e.target.value)}>
+              <option value="employee">{t("users.kind.employee")}</option>
+              <option value="admin">{t("users.kind.admin")}</option>
+            </Select>
+          </div>
+          <div className="flex gap-2">
+            <Button type="button" variant="secondary" className="flex-1" onClick={() => setEditTarget(null)}>
+              {t("btn.cancel")}
+            </Button>
+            <Button type="submit" loading={savingEdit} className="flex-1">
+              {t("users.edit.save")}
+            </Button>
+          </div>
+        </form>
       </Modal>
 
       <Modal open={showModal} onClose={() => setShowModal(false)} title={t("team.invite")} size="md">
