@@ -462,7 +462,7 @@ export default function AdminUsersPage() {
               <FieldLabel>{t("users.fields.manager")}</FieldLabel>
               <Select value={managerId} onChange={(e) => setManagerId(e.target.value)}>
                 <option value="">—</option>
-                {users.map((u) => (
+                {users.filter((u) => u.role === "admin").map((u) => (
                   <option key={u.id} value={u.id}>{u.name}</option>
                 ))}
               </Select>

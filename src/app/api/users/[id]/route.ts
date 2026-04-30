@@ -68,6 +68,25 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
   }
 
+  // Demoting an admin who still has direct reports would leave those reports
+  // pointing at a non-admin manager. Force the actor to reassign first.
+  if ("role" in body && body.role !== "admin" && target.role === "admin") {
+    const reportCount = await prisma.user.count({ where: { managerId: id } });
+    if (reportCount > 0) {
+      return NextResponse.json(
+        { error: `Cannot demote — ${reportCount} user(s) still report to this admin. Reassign their manager first.` },
+        { status: 400 },
+      );
+    }
+  }
+
+  if ("managerId" in body && body.managerId) {
+    const manager = await prisma.user.findUnique({ where: { id: body.managerId }, select: { role: true } });
+    if (!manager || manager.role !== "admin") {
+      return NextResponse.json({ error: "Manager must be an admin" }, { status: 400 });
+    }
+  }
+
   const data: Prisma.UserUpdateInput = {};
   if ("name" in body)         data.name = body.name;
   if ("jobTitle" in body)     data.jobTitle = body.jobTitle;

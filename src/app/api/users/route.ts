@@ -37,6 +37,13 @@ export async function POST(req: NextRequest) {
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) return NextResponse.json({ error: "Email already exists" }, { status: 409 });
 
+  if (managerId) {
+    const manager = await prisma.user.findUnique({ where: { id: managerId }, select: { role: true } });
+    if (!manager || manager.role !== "admin") {
+      return NextResponse.json({ error: "Manager must be an admin" }, { status: 400 });
+    }
+  }
+
   const hashed = await bcrypt.hash(password, 10);
   const user = await prisma.user.create({
     data: {

@@ -174,11 +174,19 @@ export function Sidebar({ companyName, companyTagline, logoUrl, userAvatarUrl }:
         </div>
         <button
           onClick={() => signOut({ callbackUrl: "/login" })}
-          className="w-full mt-2 flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-[11px] font-semibold transition-all duration-150 active:scale-[0.98]"
+          className="w-full mt-2 flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-[11px] font-semibold transition-all duration-150 active:scale-[0.98] hover:-translate-y-0.5"
           style={{
             background: "var(--surface)",
             color: "var(--ink-soft)",
             boxShadow: "var(--soft-press-sm)",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = "var(--ink)";
+            e.currentTarget.style.boxShadow = "var(--soft-2)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = "var(--ink-soft)";
+            e.currentTarget.style.boxShadow = "var(--soft-press-sm)";
           }}
         >
           <LogOut size={11} />
