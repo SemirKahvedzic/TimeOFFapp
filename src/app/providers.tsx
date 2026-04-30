@@ -4,6 +4,7 @@ import { Toaster } from "react-hot-toast";
 import { LanguageProvider } from "@/lib/i18n/context";
 import { type Lang } from "@/lib/i18n/messages";
 import { CompanyProvider } from "@/lib/company-context";
+import { PresenceHeartbeat } from "@/components/PresenceHeartbeat";
 
 export function Providers({
   children, language = "en", companyName = "TimeOff",
@@ -17,6 +18,7 @@ export function Providers({
     <SessionProvider>
       <LanguageProvider language={lang}>
         <CompanyProvider company={{ name: companyName }}>
+          <PresenceHeartbeat />
           {children}
           <Toaster
             position="top-right"

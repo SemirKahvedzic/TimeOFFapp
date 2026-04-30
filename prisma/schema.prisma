@@ -107,6 +107,7 @@ model User {
   language     String?  // null = inherit Company.language
   managerId    String?
   departmentId String?
+  lastSeenAt   DateTime?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

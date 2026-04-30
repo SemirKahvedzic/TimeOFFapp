@@ -26,8 +26,27 @@ interface User {
   avatarUrl?: string | null;
   isOwner?: boolean;
   createdAt: string;
+  lastSeenAt?: string | null;
   department?: { id: string; name: string; color: string } | null;
   manager?:    { id: string; name: string } | null;
+}
+
+const ONLINE_WINDOW_MS = 2 * 60_000;
+
+function presenceLabel(
+  lastSeenAt: string | null | undefined,
+  now: number,
+  t: (key: import("@/lib/i18n/messages").MessageKey, vars?: Record<string, string | number>) => string,
+): { online: boolean; text: string } {
+  if (!lastSeenAt) return { online: false, text: t("users.lastSeen.never") };
+  const diffMs = now - new Date(lastSeenAt).getTime();
+  if (diffMs < ONLINE_WINDOW_MS) return { online: true, text: t("users.online") };
+  const mins = Math.floor(diffMs / 60_000);
+  if (mins < 60) return { online: false, text: t("users.lastSeen.minutes", { n: mins }) };
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return { online: false, text: t("users.lastSeen.hours", { n: hours }) };
+  const days = Math.floor(hours / 24);
+  return { online: false, text: t("users.lastSeen.days", { n: days }) };
 }
 
 interface Department {
@@ -55,6 +74,12 @@ export default function AdminUsersPage() {
 
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(DESKTOP_PAGE_SIZE);
+  const [now, setNow] = useState<number>(() => Date.now());
+
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(id);
+  }, []);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -198,10 +223,21 @@ export default function AdminUsersPage() {
                   : u.role === "admin"
                     ? viewerIsOwner
                     : true;
+              const presence = presenceLabel(u.lastSeenAt, now, t);
               return (
               <div key={u.id} className="flex items-center justify-between gap-4 px-5 py-4" style={{ borderBottom: "1px solid var(--line)" }}>
                 <div className="flex items-center gap-3 min-w-0">
-                  <Avatar name={u.name} size={42} className="rounded-full shrink-0" imageUrl={u.avatarUrl} />
+                  <div className="relative shrink-0">
+                    <Avatar name={u.name} size={42} className="rounded-full" imageUrl={u.avatarUrl} />
+                    {presence.online && (
+                      <span
+                        title={t("users.online")}
+                        aria-label={t("users.online")}
+                        className="absolute bottom-0 right-0 block w-3 h-3 rounded-full"
+                        style={{ background: "#10b981", boxShadow: "0 0 0 2px var(--surface-2)" }}
+                      />
+                    )}
+                  </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <p className="text-sm font-bold" style={{ color: "var(--ink)" }}>{u.name}</p>
@@ -226,6 +262,12 @@ export default function AdminUsersPage() {
                       {u.email}
                       {u.manager && <> · {t("users.reportsTo")} {u.manager.name}</>}
                       {" · "}{t("users.joined")} {formatDate(u.createdAt)}
+                    </p>
+                    <p
+                      className="text-[11px] mt-0.5 font-semibold"
+                      style={{ color: presence.online ? "#10b981" : "var(--ink-faint)" }}
+                    >
+                      {presence.text}
                     </p>
                   </div>
                 </div>
