@@ -15,8 +15,8 @@ export function emailLayout(v: LayoutVars): string {
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
 <tr><td align="center" style="padding:8px 0 24px;">
 <table role="presentation" cellpadding="0" cellspacing="0" border="0">
-<tr><td style="border-radius:999px;background:linear-gradient(135deg,#7c5cff,#9b7bff);box-shadow:0 12px 28px -8px rgba(124,92,255,0.55);">
-<a href="${escapeAttr(v.cta.href)}" style="display:inline-block;padding:14px 32px;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:999px;letter-spacing:0.01em;">${escapeHtml(v.cta.label)}</a>
+<tr><td bgcolor="#7c5cff" style="border-radius:999px;background-color:#7c5cff;background:linear-gradient(135deg,#7c5cff,#9b7bff);box-shadow:0 12px 28px -8px rgba(124,92,255,0.55);">
+<a href="${escapeAttr(v.cta.href)}" style="display:inline-block;padding:14px 32px;font-size:15px;font-weight:700;color:#ffffff;background-color:#7c5cff;text-decoration:none;border-radius:999px;letter-spacing:0.01em;mso-padding-alt:0;">${escapeHtml(v.cta.label)}</a>
 </td></tr></table></td></tr></table>`
     : "";
 
@@ -55,7 +55,7 @@ a { color: #7c5cff; }
 <tr><td class="card" style="background:#ffffff;border-radius:32px;padding:40px;box-shadow:0 24px 60px -20px rgba(124,92,255,0.18),0 4px 12px -4px rgba(20,18,40,0.06);">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
 <tr><td align="center" style="padding-bottom:24px;">
-<div style="height:3px;width:80px;border-radius:99px;background:linear-gradient(90deg,#7c5cff,#ff8fb1);"></div>
+<div style="height:3px;width:80px;border-radius:99px;background-color:#7c5cff;background:linear-gradient(90deg,#7c5cff,#ff8fb1);font-size:0;line-height:0;">&nbsp;</div>
 </td></tr></table>
 <h1 class="h1" style="margin:0 0 16px;font-size:26px;line-height:1.25;font-weight:800;letter-spacing:-0.01em;color:#1a1a2e;text-align:center;">${escapeHtml(v.heading)}</h1>
 ${v.body}
