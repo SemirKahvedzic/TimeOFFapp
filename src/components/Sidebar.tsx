@@ -55,6 +55,8 @@ export function Sidebar({ companyName, companyTagline, logoUrl }: SidebarProps) 
             <img
               src={logoUrl}
               alt={companyName}
+              width={56}
+              height={56}
               className="w-14 h-14 rounded-2xl object-cover shrink-0"
               style={{ boxShadow: "var(--soft-press-sm)" }}
             />

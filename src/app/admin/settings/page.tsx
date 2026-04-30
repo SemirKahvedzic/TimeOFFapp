@@ -175,6 +175,8 @@ function LogoUploader({
         <img
           src={logoUrl}
           alt="Logo preview"
+          width={64}
+          height={64}
           className="w-16 h-16 rounded-2xl object-cover shrink-0"
           style={{ boxShadow: "var(--soft-1)" }}
         />
@@ -444,6 +446,8 @@ function BrandSection({ company, onSaved }: { company: Company; onSaved: () => v
             <img
               src={logoUrl}
               alt={name}
+              width={56}
+              height={56}
               className="w-14 h-14 rounded-2xl object-cover"
               style={{ boxShadow: `0 12px 28px -8px ${brandColor}90` }}
             />

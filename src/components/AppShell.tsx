@@ -69,6 +69,8 @@ export function AppShell({
               <img
                 src={companyLogoUrl}
                 alt={companyName}
+                width={28}
+                height={28}
                 className="w-7 h-7 rounded-lg object-cover"
                 style={{ boxShadow: "var(--soft-press-sm)" }}
               />
