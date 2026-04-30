@@ -9,13 +9,78 @@ import { prisma } from "@/lib/db";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist" });
 
+const SITE_URL =
+  process.env.NEXTAUTH_URL?.replace(/\/$/, "") ?? "https://timeoff.fun";
+
 export async function generateMetadata(): Promise<Metadata> {
   const company = await getCompany().catch(() => null);
+  const siteName = company?.name ?? "TimeOff";
+  const description =
+    company?.tagline ??
+    "Team attendance and time-off management — request, approve, and track vacation in one shared calendar.";
+
   return {
-    title: company ? `${company.name} — Time Off` : "Time Off",
-    description: company?.tagline ?? "Team attendance and time-off management",
+    metadataBase: new URL(SITE_URL),
+    title: {
+      default: `${siteName} — Time off, simplified`,
+      template: `%s · ${siteName}`,
+    },
+    description,
+    applicationName: siteName,
+    keywords: [
+      "time off",
+      "vacation tracker",
+      "PTO",
+      "attendance",
+      "team calendar",
+      "leave management",
+      "HR",
+    ],
+    authors: [{ name: siteName }],
+    creator: siteName,
+    publisher: siteName,
+    alternates: { canonical: "/" },
+    icons: {
+      icon: "/favicon.ico",
+      shortcut: "/favicon.ico",
+      apple: "/favicon.ico",
+    },
+    manifest: "/manifest.webmanifest",
+    openGraph: {
+      type: "website",
+      url: "/",
+      siteName,
+      title: `${siteName} — Time off, simplified`,
+      description,
+      locale: "en_US",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${siteName} — Time off, simplified`,
+      description,
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+      },
+    },
+    formatDetection: { telephone: false, email: false, address: false },
   };
 }
+
+export const viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)",  color: "#0f0d1f" },
+  ],
+  width: "device-width",
+  initialScale: 1,
+};
 
 async function getUserPrefs() {
   try {

@@ -9,7 +9,10 @@ export async function generateMetadata(): Promise<Metadata> {
   const company = await getCompany().catch(() => null);
   const lang: Lang = "en";
   const name = company?.name ?? "TimeOff";
-  return { title: `${translate(lang, "reset.title")} · ${name}` };
+  return {
+    title: `${translate(lang, "reset.title")} · ${name}`,
+    robots: { index: false, follow: false },
+  };
 }
 
 export default async function ResetPasswordPage() {

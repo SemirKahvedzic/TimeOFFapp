@@ -19,10 +19,41 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function LoginPage() {
   const company = await getCompany().catch(() => null);
+  const siteUrl =
+    process.env.NEXTAUTH_URL?.replace(/\/$/, "") ?? "https://timeoff.fun";
+  const name = company?.name ?? "TimeOff";
+  const description =
+    company?.tagline ??
+    "Team attendance and time-off management — request, approve, and track vacation in one shared calendar.";
+
+  const ld = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name,
+    description,
+    url: siteUrl,
+    applicationCategory: "BusinessApplication",
+    operatingSystem: "Web",
+    offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+    publisher: {
+      "@type": "Organization",
+      name,
+      url: siteUrl,
+      logo: company?.logoUrl ? `${siteUrl}${company.logoUrl}` : undefined,
+    },
+  };
+
   return (
-    <LoginForm
-      companyName={company?.name ?? "TimeOff"}
-      logoUrl={company?.logoUrl ?? null}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        // Server-rendered JSON-LD; safe — values come from getCompany.
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }}
+      />
+      <LoginForm
+        companyName={company?.name ?? "TimeOff"}
+        logoUrl={company?.logoUrl ?? null}
+      />
+    </>
   );
 }
