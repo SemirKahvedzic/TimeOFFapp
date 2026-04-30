@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getCompany } from "@/lib/company";
 import { audit } from "@/lib/audit";
+import { userIsOwner } from "@/lib/owner";
 import type { Prisma } from "@prisma/client";
 
 export async function GET() {
@@ -16,7 +17,9 @@ export async function GET() {
 
 export async function PATCH(req: NextRequest) {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "admin") {
+  // Brand changes are gated to owner-admins so a regular admin can't repaint
+  // the workspace.
+  if (!session || session.user.role !== "admin" || !userIsOwner(session.user)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   const body = await req.json();

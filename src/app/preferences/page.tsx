@@ -1,9 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Sun, Moon, Globe, Save, Eye, EyeOff, KeyRound } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { Sun, Moon, Globe, Save, Eye, EyeOff, KeyRound, Upload, Trash2, Camera } from "lucide-react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/Button";
 import { Input, Select, FieldLabel } from "@/components/ui/Input";
+import { Avatar } from "@/components/Avatar";
 import { useT } from "@/lib/i18n/context";
 import { LANGUAGES, LANGUAGE_LABELS, type Lang } from "@/lib/i18n/messages";
 import { usePageTitle } from "@/lib/usePageTitle";
@@ -15,6 +17,7 @@ export default function PreferencesPage() {
   const t = useT();
   const [theme, setTheme] = useState<ThemeChoiceValue>("light");
   const [language, setLanguage] = useState<Lang>("en");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -31,9 +34,10 @@ export default function PreferencesPage() {
 
     fetch("/api/me/preferences")
       .then((r) => r.json())
-      .then((data: { theme: string | null; language: string | null }) => {
+      .then((data: { theme: string | null; language: string | null; avatarUrl: string | null }) => {
         setTheme((data.theme as ThemeChoiceValue) ?? resolvedTheme);
         setLanguage((data.language as Lang) ?? resolvedLang);
+        setAvatarUrl(data.avatarUrl ?? null);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -75,6 +79,8 @@ export default function PreferencesPage() {
           {t("prefs.subtitle")}
         </p>
       </div>
+
+      <PhotoSection avatarUrl={avatarUrl} onChange={setAvatarUrl} />
 
       <div className="rounded-3xl p-6 space-y-5" style={{ background: "var(--surface-2)", boxShadow: "var(--soft-1)" }}>
         <h2 className="text-base font-bold" style={{ color: "var(--ink)" }}>
@@ -134,6 +140,120 @@ export default function PreferencesPage() {
       </div>
 
       <PasswordSection />
+    </div>
+  );
+}
+
+const MAX_AVATAR_BYTES = 256 * 1024;
+
+function PhotoSection({
+  avatarUrl,
+  onChange,
+}: {
+  avatarUrl: string | null;
+  onChange: (next: string | null) => void;
+}) {
+  const t = useT();
+  const { data: session } = useSession();
+  const [saving, setSaving] = useState(false);
+
+  async function handleFile(file: File | null) {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error(t("prefs.photo.notImage"));
+      return;
+    }
+    if (file.size > MAX_AVATAR_BYTES) {
+      toast.error(t("prefs.photo.tooBig"));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const dataUrl = typeof reader.result === "string" ? reader.result : null;
+      if (!dataUrl) {
+        toast.error(t("prefs.photo.readFailed"));
+        return;
+      }
+      await save(dataUrl);
+    };
+    reader.onerror = () => toast.error(t("prefs.photo.readFailed"));
+    reader.readAsDataURL(file);
+  }
+
+  async function save(next: string | null) {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/me/avatar", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ avatarUrl: next }),
+      });
+      if (!res.ok) throw new Error("failed");
+      onChange(next);
+      toast.success(next ? t("prefs.photo.saved") : t("prefs.photo.removed"));
+      // Layouts read avatarUrl server-side; reload so the Sidebar and any
+      // other surfaces baked from the layout pick up the new value.
+      window.location.reload();
+    } catch {
+      toast.error(t("prefs.photo.saveFailed"));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="rounded-3xl p-6 space-y-4" style={{ background: "var(--surface-2)", boxShadow: "var(--soft-1)" }}>
+      <h2 className="text-base font-bold flex items-center gap-2" style={{ color: "var(--ink)" }}>
+        <Camera size={16} style={{ color: "var(--brand)" }} />
+        {t("prefs.section.photo")}
+      </h2>
+      <div
+        className="flex items-center gap-4 p-3 rounded-2xl"
+        style={{ background: "var(--surface)", boxShadow: "var(--soft-press-sm)" }}
+      >
+        <Avatar
+          name={session?.user?.name ?? "?"}
+          imageUrl={avatarUrl}
+          size={64}
+          className="rounded-2xl"
+        />
+        <div className="flex-1 min-w-0">
+          <p className="text-[11px]" style={{ color: "var(--ink-mute)" }}>
+            {t("prefs.photo.hint")}
+          </p>
+          <div className="flex flex-wrap gap-2 mt-2">
+            <label
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold cursor-pointer transition-all duration-150 active:scale-[0.97]"
+              style={{ background: "var(--brand-soft)", color: "var(--brand)" }}
+            >
+              <Upload size={12} />
+              {avatarUrl ? t("prefs.photo.replace") : t("prefs.photo.upload")}
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                disabled={saving}
+                onChange={(e) => {
+                  handleFile(e.target.files?.[0] ?? null);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+            {avatarUrl && (
+              <button
+                type="button"
+                disabled={saving}
+                onClick={() => save(null)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition-all duration-150 active:scale-[0.97] disabled:opacity-50"
+                style={{ background: "rgba(239,68,68,0.12)", color: "#ef4444" }}
+              >
+                <Trash2 size={12} />
+                {t("prefs.photo.remove")}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

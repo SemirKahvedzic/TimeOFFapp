@@ -101,6 +101,8 @@ model User {
   jobTitle     String?
   phoneNumber  String?
   avatarColor  String?  // hex override; if null, deterministic gradient is used
+  avatarUrl    String?  // base64 data URL of the user's uploaded profile photo
+  isOwner      Boolean  @default(false)  // owner admins can edit brand and promote others; super-owner is determined by email
   theme        String?  // null = inherit Company.theme
   language     String?  // null = inherit Company.language
   managerId    String?

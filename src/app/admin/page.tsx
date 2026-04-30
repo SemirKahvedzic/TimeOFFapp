@@ -21,7 +21,7 @@ interface TimeOffRequest {
   halfDayStart?: boolean;
   halfDayEnd?: boolean;
   createdAt: string;
-  user: { id: string; name: string; email: string; department?: { name: string; color: string } | null };
+  user: { id: string; name: string; email: string; avatarUrl?: string | null; department?: { name: string; color: string } | null };
   leaveType?: { id: string; key: string; label: string; emoji: string; color: string } | null;
 }
 
@@ -203,7 +203,7 @@ export default function AdminDashboard() {
                     style={{ background: "var(--surface)", boxShadow: "var(--soft-press-sm)" }}
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <Avatar name={r.user.name} size={36} className="rounded-full shrink-0" />
+                      <Avatar name={r.user.name} size={36} className="rounded-full shrink-0" imageUrl={r.user.avatarUrl} />
                       <div className="min-w-0">
                         <p className="text-sm font-bold truncate" style={{ color: "var(--ink)" }}>
                           {r.user.name}

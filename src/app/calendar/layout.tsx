@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { AppShell } from "@/components/AppShell";
 import { getCompany } from "@/lib/company";
+import { prisma } from "@/lib/db";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
@@ -11,12 +12,16 @@ export default async function CalendarLayout({ children }: { children: React.Rea
   const session = await getServerSession(authOptions);
   if (!session) redirect("/login");
 
-  const company = await getCompany();
+  const [company, me] = await Promise.all([
+    getCompany(),
+    prisma.user.findUnique({ where: { id: session.user.id }, select: { avatarUrl: true } }),
+  ]);
   return (
     <AppShell
       companyName={company.name}
       companyTagline={company.tagline}
       companyLogoUrl={company.logoUrl}
+      userAvatarUrl={me?.avatarUrl ?? null}
       maxWidth="max-w-6xl"
     >
       {children}

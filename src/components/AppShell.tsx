@@ -9,12 +9,14 @@ export function AppShell({
   companyName,
   companyTagline,
   companyLogoUrl,
+  userAvatarUrl,
   maxWidth = "max-w-5xl",
 }: {
   children: ReactNode;
   companyName: string;
   companyTagline?: string | null;
   companyLogoUrl?: string | null;
+  userAvatarUrl?: string | null;
   maxWidth?: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -45,6 +47,7 @@ export function AppShell({
           companyName={companyName}
           companyTagline={companyTagline}
           logoUrl={companyLogoUrl}
+          userAvatarUrl={userAvatarUrl}
         />
       </div>
 

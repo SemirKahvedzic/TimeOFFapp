@@ -30,9 +30,10 @@ interface SidebarProps {
   companyName: string;
   companyTagline?: string | null;
   logoUrl?: string | null;
+  userAvatarUrl?: string | null;
 }
 
-export function Sidebar({ companyName, companyTagline, logoUrl }: SidebarProps) {
+export function Sidebar({ companyName, companyTagline, logoUrl, userAvatarUrl }: SidebarProps) {
   const { data: session } = useSession();
   const pathname = usePathname();
   const t = useT();
@@ -161,7 +162,7 @@ export function Sidebar({ companyName, companyTagline, logoUrl }: SidebarProps) 
         style={{ background: "var(--surface-2)", boxShadow: "var(--soft-1)" }}
       >
         <div className="flex items-center gap-2.5">
-          <Avatar name={session?.user?.name ?? "?"} size={32} className="rounded-full" />
+          <Avatar name={session?.user?.name ?? "?"} size={32} className="rounded-full" imageUrl={userAvatarUrl} />
           <div className="flex-1 min-w-0">
             <p className="text-[12px] font-bold truncate leading-tight" style={{ color: "var(--ink)" }}>
               {session?.user?.name}

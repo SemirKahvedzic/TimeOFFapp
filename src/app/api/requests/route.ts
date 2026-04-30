@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
   const requests = await prisma.timeOffRequest.findMany({
     where,
     include: {
-      user: { select: { id: true, name: true, email: true, department: { select: { name: true, color: true } } } },
+      user: { select: { id: true, name: true, email: true, avatarUrl: true, department: { select: { name: true, color: true } } } },
       reviewedBy: { select: { name: true } },
       leaveType: { select: { id: true, key: true, label: true, emoji: true, color: true } },
     },

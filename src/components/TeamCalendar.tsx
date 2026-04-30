@@ -27,7 +27,7 @@ interface CalendarRequest {
   status: string;
   type: string;
   reason?: string;
-  user: { id: string; name: string };
+  user: { id: string; name: string; avatarUrl?: string | null };
   leaveType?: { id: string; key: string; label: string; emoji: string; color: string } | null;
 }
 
@@ -442,7 +442,7 @@ export function TeamCalendar({ onRequestCreated }: TeamCalendarProps) {
                         className="flex items-start gap-3 p-3 rounded-2xl"
                         style={{ background: "var(--surface)", boxShadow: "var(--soft-press-sm)" }}
                       >
-                        <Avatar name={r.user.name} size={32} className="rounded-full shrink-0" />
+                        <Avatar name={r.user.name} size={32} className="rounded-full shrink-0" imageUrl={r.user.avatarUrl} />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-sm font-bold" style={{ color: "var(--ink)" }}>{r.user.name}</span>
@@ -619,7 +619,7 @@ function ListView({
     return 0;
   });
 
-  type Total = { user: { id: string; name: string }; count: number; color: string };
+  type Total = { user: { id: string; name: string; avatarUrl: string | null }; count: number; color: string };
   const totalsByUser = new Map<string, Total>();
   for (const r of requests) {
     if (r.status === "rejected") continue;
@@ -638,7 +638,7 @@ function ListView({
       existing.count += workingDays;
     } else {
       totalsByUser.set(r.user.id, {
-        user: { id: r.user.id, name: r.user.name },
+        user: { id: r.user.id, name: r.user.name, avatarUrl: r.user.avatarUrl ?? null },
         count: workingDays,
         color: r.leaveType?.color ?? "#10b981",
       });
@@ -721,7 +721,7 @@ function ListView({
                 className="inline-flex items-center gap-2 pl-1 pr-3 py-1 rounded-full"
                 style={{ background: "var(--surface-2)", boxShadow: "var(--soft-press-sm)" }}
               >
-                <Avatar name={tot.user.name} size={22} className="rounded-full shrink-0" />
+                <Avatar name={tot.user.name} size={22} className="rounded-full shrink-0" imageUrl={tot.user.avatarUrl} />
                 <span className="text-[12px] font-bold" style={{ color: "var(--ink)" }}>
                   {tot.user.name}
                 </span>
@@ -795,7 +795,7 @@ function ListView({
                     )}
                     style={{ background: `color-mix(in oklab, ${color} 12%, var(--surface-2))` }}
                   >
-                    <Avatar name={r.user.name} size={28} className="rounded-full shrink-0" />
+                    <Avatar name={r.user.name} size={28} className="rounded-full shrink-0" imageUrl={r.user.avatarUrl} />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span

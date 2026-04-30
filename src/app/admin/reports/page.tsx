@@ -15,8 +15,8 @@ interface ReportData {
   year: number;
   usageByMonth:      { month: string; days: number }[];
   usageByDepartment: { department: string; days: number }[];
-  topUsers:          { name: string; days: number }[];
-  upcomingCoverage:  { id: string; name: string; department: string | null; deptColor: string | null; startDate: string; endDate: string }[];
+  topUsers:          { name: string; avatarUrl: string | null; days: number }[];
+  upcomingCoverage:  { id: string; name: string; avatarUrl: string | null; department: string | null; deptColor: string | null; startDate: string; endDate: string }[];
 }
 
 interface DepartmentOption { id: string; name: string; color: string; }
@@ -194,7 +194,7 @@ export default function ReportsPage() {
                   className="flex items-center gap-3 p-3 rounded-2xl"
                   style={{ background: "var(--surface)", boxShadow: "var(--soft-press-sm)" }}
                 >
-                  <Avatar name={u.name} size={36} className="rounded-full shrink-0" />
+                  <Avatar name={u.name} size={36} className="rounded-full shrink-0" imageUrl={u.avatarUrl} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
                       <p className="text-sm font-bold truncate" style={{ color: "var(--ink)" }}>{u.name}</p>
@@ -229,7 +229,7 @@ export default function ReportsPage() {
                 className="flex items-center gap-3 p-3 rounded-2xl"
                 style={{ background: "var(--surface)", boxShadow: "var(--soft-press-sm)" }}
               >
-                <Avatar name={c.name} size={32} className="rounded-full shrink-0" />
+                <Avatar name={c.name} size={32} className="rounded-full shrink-0" imageUrl={c.avatarUrl} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="text-sm font-bold truncate" style={{ color: "var(--ink)" }}>{c.name}</p>

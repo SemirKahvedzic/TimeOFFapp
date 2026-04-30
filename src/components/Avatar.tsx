@@ -31,11 +31,27 @@ export function Avatar({
   name,
   size = 40,
   className = "",
+  imageUrl,
 }: {
   name: string;
   size?: number;
   className?: string;
+  imageUrl?: string | null;
 }) {
+  if (imageUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={imageUrl}
+        alt={name}
+        width={size}
+        height={size}
+        className={className}
+        style={{ width: size, height: size, objectFit: "cover", flexShrink: 0, display: "block" }}
+      />
+    );
+  }
+
   const hash = hashName(name || "?");
   const [c1, c2] = PALETTES[hash % PALETTES.length];
   const initials = getInitials(name || "?");

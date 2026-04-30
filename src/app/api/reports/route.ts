@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
       status: "approved",
       startDate: { gte: startOfYear(new Date(year, 0, 1)), lte: endOfYear(new Date(year, 0, 1)) },
     },
-    include: { user: { select: { id: true, name: true, department: true } } },
+    include: { user: { select: { id: true, name: true, avatarUrl: true, department: true } } },
   });
 
   const dayCount = (r: { startDate: Date; endDate: Date; halfDayStart: boolean; halfDayEnd: boolean }) => {
@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
 
   const monthMap = new Map<string, number>();
   const deptMap = new Map<string, number>();
-  const userMap = new Map<string, { name: string; days: number }>();
+  const userMap = new Map<string, { name: string; avatarUrl: string | null; days: number }>();
 
   for (const r of requests) {
     const m = format(new Date(r.startDate), "yyyy-MM");
@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
     monthMap.set(m, (monthMap.get(m) ?? 0) + d);
     const dept = r.user.department?.name ?? "Unassigned";
     deptMap.set(dept, (deptMap.get(dept) ?? 0) + d);
-    const u = userMap.get(r.user.id) ?? { name: r.user.name, days: 0 };
+    const u = userMap.get(r.user.id) ?? { name: r.user.name, avatarUrl: r.user.avatarUrl ?? null, days: 0 };
     u.days += d;
     userMap.set(r.user.id, u);
   }
@@ -75,7 +75,7 @@ export async function GET(req: NextRequest) {
       endDate:   { gte: today },
       startDate: { lte: inSixWeeks },
     },
-    include: { user: { select: { id: true, name: true, department: { select: { name: true, color: true } } } } },
+    include: { user: { select: { id: true, name: true, avatarUrl: true, department: { select: { name: true, color: true } } } } },
     orderBy: { startDate: "asc" },
   });
 
@@ -87,6 +87,7 @@ export async function GET(req: NextRequest) {
     upcomingCoverage: upcoming.map((r) => ({
       id: r.id,
       name: r.user.name,
+      avatarUrl: r.user.avatarUrl ?? null,
       department: r.user.department?.name ?? null,
       deptColor: r.user.department?.color ?? null,
       startDate: r.startDate,

@@ -1,9 +1,10 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import {
   Save, Trash2, Plus, Building2, Palette, Briefcase, PartyPopper,
   Link as LinkIcon, Copy, Check, Pencil, Upload, ImageIcon, Sun, Moon,
-  RotateCcw,
+  RotateCcw, Lock,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/Button";
@@ -14,6 +15,7 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useT } from "@/lib/i18n/context";
 import { type MessageKey } from "@/lib/i18n/messages";
 import { usePageTitle } from "@/lib/usePageTitle";
+import { userIsOwner } from "@/lib/owner";
 
 interface Company {
   id: string;
@@ -239,6 +241,8 @@ function LogoUploader({
 /* ─────────────────────────────────────────────────────────────── */
 function BrandSection({ company, onSaved }: { company: Company; onSaved: () => void }) {
   const t = useT();
+  const { data: session } = useSession();
+  const canEdit = userIsOwner(session?.user);
   const [name, setName] = useState(company.name);
   const [tagline, setTagline] = useState(company.tagline ?? "");
   const [brandColor, setBrandColor] = useState(company.brandColor);
@@ -314,10 +318,31 @@ function BrandSection({ company, onSaved }: { company: Company; onSaved: () => v
   }
 
   return (
-    <div className="rounded-3xl p-6 space-y-5" style={{ background: "var(--surface-2)", boxShadow: "var(--soft-1)" }}>
+    <fieldset
+      disabled={!canEdit}
+      className="rounded-3xl p-6 space-y-5 border-0 m-0 disabled:opacity-90"
+      style={{ background: "var(--surface-2)", boxShadow: "var(--soft-1)" }}
+    >
       <h2 className="text-base font-extrabold tracking-tight" style={{ color: "var(--ink)" }}>
         {t("settings.brand.identity")}
       </h2>
+
+      {!canEdit && (
+        <div
+          className="flex items-start gap-3 p-3.5 rounded-2xl"
+          style={{ background: "var(--surface)", boxShadow: "var(--soft-press-sm)" }}
+        >
+          <Lock size={14} className="mt-0.5 shrink-0" style={{ color: "var(--brand)" }} />
+          <div className="min-w-0">
+            <p className="text-[12px] font-bold" style={{ color: "var(--ink)" }}>
+              {t("settings.brand.lockedTitle")}
+            </p>
+            <p className="text-[11px] mt-0.5" style={{ color: "var(--ink-mute)" }}>
+              {t("settings.brand.lockedHint")}
+            </p>
+          </div>
+        </div>
+      )}
 
       <div>
         <FieldLabel>{t("settings.brand.logo")}</FieldLabel>
@@ -479,11 +504,11 @@ function BrandSection({ company, onSaved }: { company: Company; onSaved: () => v
         </div>
       </div>
 
-      <Button onClick={save} loading={saving} disabled={!isDirty} size="lg">
+      <Button onClick={save} loading={saving} disabled={!isDirty || !canEdit} size="lg">
         <Save size={15} />
         {t("btn.save")}
       </Button>
-    </div>
+    </fieldset>
   );
 }
 

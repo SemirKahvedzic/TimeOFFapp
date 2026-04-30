@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
         ...(startDate && endDate ? { AND: [{ startDate: { lte: endDate } }, { endDate: { gte: startDate } }] } : {}),
       },
       include: {
-        user: { select: { id: true, name: true, department: { select: { name: true, color: true } } } },
+        user: { select: { id: true, name: true, avatarUrl: true, department: { select: { name: true, color: true } } } },
         leaveType: { select: { id: true, key: true, label: true, emoji: true, color: true } },
       },
       orderBy: { startDate: "asc" },
