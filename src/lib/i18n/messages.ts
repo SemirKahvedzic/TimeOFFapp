@@ -272,6 +272,7 @@ const en = {
   "cal.list.days":   "{count} days",
 
   // ── Team / Users page ────────────────────────────────────────
+  "users.kind.owner":     "Owner",
   "users.kind.admin":     "Admin",
   "users.kind.employee":  "Employee",
   "users.fields.fullName":"Full name",
@@ -664,6 +665,7 @@ const de: Record<Key, string> = {
   "cal.list.day":    "{count} Tag",
   "cal.list.days":   "{count} Tage",
 
+  "users.kind.owner":     "Eigentümer",
   "users.kind.admin":     "Admin",
   "users.kind.employee":  "Mitarbeiter",
   "users.fields.fullName":"Vollständiger Name",
@@ -1048,6 +1050,7 @@ const it: Record<Key, string> = {
   "cal.list.day":    "{count} giorno",
   "cal.list.days":   "{count} giorni",
 
+  "users.kind.owner":     "Proprietario",
   "users.kind.admin":     "Admin",
   "users.kind.employee":  "Dipendente",
   "users.fields.fullName":"Nome completo",

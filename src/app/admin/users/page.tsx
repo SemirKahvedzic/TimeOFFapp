@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { UserPlus, Trash2, Pencil, Shield, User as UserIcon, Briefcase } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { UserPlus, Trash2, Pencil, Shield, Crown, User as UserIcon, Briefcase } from "lucide-react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
@@ -8,6 +9,7 @@ import { Input, Select, FieldLabel } from "@/components/ui/Input";
 import { Pill } from "@/components/ui/Badge";
 import { Avatar } from "@/components/Avatar";
 import { formatDate } from "@/lib/utils";
+import { isOwnerEmail } from "@/lib/owner";
 import { useT } from "@/lib/i18n/context";
 import { usePageTitle } from "@/lib/usePageTitle";
 
@@ -31,6 +33,8 @@ interface Department {
 export default function AdminUsersPage() {
   usePageTitle("nav.team");
   const t = useT();
+  const { data: session } = useSession();
+  const viewerIsOwner = isOwnerEmail(session?.user?.email);
   const [users, setUsers] = useState<User[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
@@ -155,14 +159,24 @@ export default function AdminUsersPage() {
           <div className="py-12 text-center text-sm" style={{ color: "var(--ink-mute)" }}>{t("common.loading")}</div>
         ) : (
           <div className="divide-y" style={{ borderColor: "var(--line)" }}>
-            {users.map((u) => (
+            {users.map((u) => {
+              const rowIsOwner = isOwnerEmail(u.email);
+              const canEdit   = rowIsOwner ? viewerIsOwner : true;
+              const canDelete = rowIsOwner
+                ? false
+                : u.role === "admin"
+                  ? viewerIsOwner
+                  : true;
+              return (
               <div key={u.id} className="flex items-center justify-between gap-4 px-5 py-4" style={{ borderBottom: "1px solid var(--line)" }}>
                 <div className="flex items-center gap-3 min-w-0">
                   <Avatar name={u.name} size={42} className="rounded-full shrink-0" />
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <p className="text-sm font-bold" style={{ color: "var(--ink)" }}>{u.name}</p>
-                      {u.role === "admin" ? (
+                      {rowIsOwner ? (
+                        <Pill label={t("users.kind.owner")} color="#f59e0b" icon={<Crown size={9} />} />
+                      ) : u.role === "admin" ? (
                         <Pill label={t("users.kind.admin")} color="#7c5cff" icon={<Shield size={9} />} />
                       ) : (
                         <Pill label={t("users.kind.employee")} color="#64748b" icon={<UserIcon size={9} />} />
@@ -185,23 +199,28 @@ export default function AdminUsersPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
-                  <button
-                    onClick={() => openEdit(u)}
-                    className="p-2 rounded-full transition-all text-[color:var(--ink-faint)] hover:text-[color:var(--brand)] hover:bg-[color:var(--brand-soft)]"
-                    aria-label={t("users.edit.aria")}
-                  >
-                    <Pencil size={14} />
-                  </button>
-                  <button
-                    onClick={() => setDeleteTarget({ id: u.id, name: u.name })}
-                    className="p-2 rounded-full transition-all text-[color:var(--ink-faint)] hover:text-[#ef4444] hover:bg-[rgba(239,68,68,0.12)]"
-                    aria-label="Remove member"
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                  {canEdit && (
+                    <button
+                      onClick={() => openEdit(u)}
+                      className="p-2 rounded-full transition-all text-[color:var(--ink-faint)] hover:text-[color:var(--brand)] hover:bg-[color:var(--brand-soft)]"
+                      aria-label={t("users.edit.aria")}
+                    >
+                      <Pencil size={14} />
+                    </button>
+                  )}
+                  {canDelete && (
+                    <button
+                      onClick={() => setDeleteTarget({ id: u.id, name: u.name })}
+                      className="p-2 rounded-full transition-all text-[color:var(--ink-faint)] hover:text-[#ef4444] hover:bg-[rgba(239,68,68,0.12)]"
+                      aria-label="Remove member"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -233,7 +252,11 @@ export default function AdminUsersPage() {
           </div>
           <div>
             <FieldLabel>{t("users.fields.role")}</FieldLabel>
-            <Select value={editRole} onChange={(e) => setEditRole(e.target.value)}>
+            <Select
+              value={editRole}
+              onChange={(e) => setEditRole(e.target.value)}
+              disabled={isOwnerEmail(editTarget?.email)}
+            >
               <option value="employee">{t("users.kind.employee")}</option>
               <option value="admin">{t("users.kind.admin")}</option>
             </Select>
