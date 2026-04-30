@@ -8,7 +8,6 @@ import { Input, Select, FieldLabel } from "@/components/ui/Input";
 import { Pill } from "@/components/ui/Badge";
 import { Avatar } from "@/components/Avatar";
 import { formatDate } from "@/lib/utils";
-import { sendInvitationEmail } from "@/lib/email";
 import { useT } from "@/lib/i18n/context";
 import { usePageTitle } from "@/lib/usePageTitle";
 
@@ -80,13 +79,9 @@ export default function AdminUsersPage() {
       if (!res.ok) throw new Error(data.error);
       toast.success(t("users.toast.added"));
       setShowModal(false);
-      const savedName = name, savedEmail = email, savedPassword = password;
       setName(""); setEmail(""); setPassword(""); setRole("employee");
       setJobTitle(""); setDepartmentId(""); setManagerId("");
       fetchAll();
-      sendInvitationEmail(savedName, savedEmail, savedPassword).catch(() => {
-        toast.error(t("users.toast.inviteEmailFailed"));
-      });
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Failed");
     } finally {

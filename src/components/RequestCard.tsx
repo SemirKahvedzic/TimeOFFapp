@@ -5,7 +5,6 @@ import toast from "react-hot-toast";
 import { Modal } from "./ui/Modal";
 import { Button } from "./ui/Button";
 import { formatDateRange, daysBetween, cn } from "@/lib/utils";
-import { sendRequestStatusEmail } from "@/lib/email";
 import { useT } from "@/lib/i18n/context";
 import type { MessageKey } from "@/lib/i18n/messages";
 
@@ -63,12 +62,6 @@ export function RequestCard({ request, showUser, isAdmin, onUpdate }: RequestCar
       });
       if (!res.ok) throw new Error((await res.json()).error);
       toast.success(t("card.toast.approved"));
-      if (request.user) {
-        sendRequestStatusEmail(
-          request.user.name, request.user.email, "approved",
-          request.startDate.slice(0, 10), request.endDate.slice(0, 10),
-        ).catch(() => {});
-      }
       onUpdate();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("card.toast.failed"));
@@ -102,13 +95,6 @@ export function RequestCard({ request, showUser, isAdmin, onUpdate }: RequestCar
       });
       if (!res.ok) throw new Error((await res.json()).error);
       toast.success(t("card.toast.rejected"));
-      if (request.user) {
-        sendRequestStatusEmail(
-          request.user.name, request.user.email, "rejected",
-          request.startDate.slice(0, 10), request.endDate.slice(0, 10),
-          rejectNote.trim() || undefined,
-        ).catch(() => {});
-      }
       setShowReject(false);
       setRejectNote("");
       onUpdate();

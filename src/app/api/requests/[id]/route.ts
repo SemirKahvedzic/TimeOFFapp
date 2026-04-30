@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { audit } from "@/lib/audit";
 import { countLeaveDays } from "@/lib/utils";
 import { workWeekDays, getCompany } from "@/lib/company";
+import { sendRequestStatusEmail } from "@/lib/server-email";
 
 async function recomputeBalanceFor(userId: string, leaveTypeId: string, year: number) {
   const company = await getCompany();
@@ -82,6 +83,26 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     targetId: id,
     metadata: { rejectionReason: rejectionReason || null },
   });
+
+  if (request.user) {
+    const origin =
+      req.headers.get("origin") ??
+      process.env.NEXTAUTH_URL ??
+      `https://${req.headers.get("host")}`;
+    const company = await getCompany().catch(() => null);
+    sendRequestStatusEmail({
+      to: request.user.email,
+      name: request.user.name,
+      status: status as "approved" | "rejected",
+      startDate: request.startDate.toISOString().slice(0, 10),
+      endDate: request.endDate.toISOString().slice(0, 10),
+      rejectionReason: status === "rejected" ? (rejectionReason || null) : null,
+      companyName: company?.name ?? "TimeOff",
+      dashboardUrl: `${origin}/dashboard`,
+    }).catch((err) => {
+      console.error("[requests.PATCH] status email failed:", err);
+    });
+  }
 
   return NextResponse.json(request);
 }

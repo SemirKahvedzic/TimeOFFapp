@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Eye, EyeOff, Sparkles, ArrowRight } from "lucide-react";
 import { Input, FieldLabel } from "@/components/ui/Input";
 import { useT } from "@/lib/i18n/context";
@@ -95,7 +96,21 @@ export function LoginForm({ companyName, logoUrl }: LoginFormProps) {
             />
           </div>
           <div>
-            <FieldLabel>{t("login.password")}</FieldLabel>
+            <div className="flex items-end justify-between mb-2">
+              <span
+                className="text-[10px] font-bold uppercase tracking-[0.16em]"
+                style={{ color: "var(--ink-mute)" }}
+              >
+                {t("login.password")}
+              </span>
+              <Link
+                href="/forgot-password"
+                className="text-[11px] font-semibold hover:underline"
+                style={{ color: "var(--brand)" }}
+              >
+                {t("login.forgot")}
+              </Link>
+            </div>
             <div className="relative">
               <Input
                 type={showPw ? "text" : "password"}

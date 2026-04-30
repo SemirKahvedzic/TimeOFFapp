@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { audit } from "@/lib/audit";
+import { sendInvitationEmail } from "@/lib/server-email";
+import { getCompany } from "@/lib/company";
 import bcrypt from "bcryptjs";
 
 export async function GET() {
@@ -67,6 +69,21 @@ export async function POST(req: NextRequest) {
     targetType: "User",
     targetId: user.id,
     metadata: { email, role },
+  });
+
+  const origin =
+    req.headers.get("origin") ??
+    process.env.NEXTAUTH_URL ??
+    `https://${req.headers.get("host")}`;
+  const company = await getCompany().catch(() => null);
+  sendInvitationEmail({
+    to: email,
+    name,
+    password,
+    companyName: company?.name ?? "TimeOff",
+    loginUrl: `${origin}/login`,
+  }).catch((err) => {
+    console.error("[users.POST] invitation email failed:", err);
   });
 
   return NextResponse.json(user, { status: 201 });
