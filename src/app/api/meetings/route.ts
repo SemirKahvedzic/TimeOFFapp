@@ -13,20 +13,30 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const from  = searchParams.get("from");
   const to    = searchParams.get("to");
-  const scope = searchParams.get("scope"); // "upcoming" | "past" | "organized"
+  const scope = searchParams.get("scope"); // "upcoming" | "past" | "organized" | "invites"
 
   const userId = session.user.id;
   const now = new Date();
 
+  // Default visibility: meetings I organize OR meetings I've accepted.
+  // Pending and declined invites are excluded from the main lists; the
+  // "invites" scope below surfaces them separately for the RSVP widget.
   const where: Record<string, unknown> = {
     OR: [
       { organizerId: userId },
-      { attendees: { some: { userId } } },
+      { attendees: { some: { userId, status: "accepted" } } },
     ],
   };
 
   if (scope === "organized") {
     where.OR = [{ organizerId: userId }];
+  } else if (scope === "invites") {
+    // Pending invites for future meetings only.
+    where.OR = [
+      { attendees: { some: { userId, status: "pending" } } },
+    ];
+    where.status = "scheduled";
+    where.endsAt = { gte: now };
   }
   if (scope === "upcoming") {
     where.endsAt = { gte: now };
@@ -127,6 +137,7 @@ export async function POST(req: NextRequest) {
       kind: "invite",
       company,
       meetingsUrl: `${origin}/meetings`,
+      origin,
       recipients: [
         ...meeting.attendees.map((a) => a.user),
         meeting.organizer,

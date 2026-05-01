@@ -150,6 +150,7 @@ export default function MeetingsPage() {
         title={t("meetings.new.title")}
         subtitle={t("meetings.new.subtitle")}
         size="md"
+        dismissible={false}
       >
         <MeetingForm
           timeZone={timeZone}

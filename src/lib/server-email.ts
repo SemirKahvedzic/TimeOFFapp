@@ -3,6 +3,7 @@ import { renderPasswordResetEmail } from "./email-templates/password-reset";
 import { renderInvitationEmail } from "./email-templates/invitation";
 import { renderRequestStatusEmail } from "./email-templates/request-status";
 import { renderMeetingInviteEmail, type MeetingEmailKind } from "./email-templates/meeting-invite";
+import { renderMeetingRsvpNoticeEmail } from "./email-templates/meeting-rsvp-notice";
 
 const apiKey = process.env.RESEND_API_KEY;
 const fromAddress =
@@ -103,6 +104,8 @@ export async function sendMeetingEmail(args: {
   companyName: string;
   meetingsUrl: string;
   ics: string;
+  rsvpAcceptUrl?: string | null;
+  rsvpDeclineUrl?: string | null;
 }) {
   const { html, text, subject } = renderMeetingInviteEmail({
     kind: args.kind,
@@ -115,6 +118,8 @@ export async function sendMeetingEmail(args: {
     attendees: args.attendees,
     companyName: args.companyName,
     meetingsUrl: args.meetingsUrl,
+    rsvpAcceptUrl: args.rsvpAcceptUrl,
+    rsvpDeclineUrl: args.rsvpDeclineUrl,
   });
   const method = args.kind === "cancel" ? "CANCEL" : "REQUEST";
   return deliver({
@@ -130,6 +135,28 @@ export async function sendMeetingEmail(args: {
       },
     ],
   });
+}
+
+export async function sendMeetingRsvpNoticeEmail(args: {
+  to: string;
+  organizerName: string;
+  attendeeName: string;
+  status: "accepted" | "declined";
+  meetingTitle: string;
+  whenText: string;
+  companyName: string;
+  meetingsUrl: string;
+}) {
+  const { html, text, subject } = renderMeetingRsvpNoticeEmail({
+    organizerName: args.organizerName,
+    attendeeName: args.attendeeName,
+    status: args.status,
+    meetingTitle: args.meetingTitle,
+    whenText: args.whenText,
+    companyName: args.companyName,
+    meetingsUrl: args.meetingsUrl,
+  });
+  return deliver({ to: args.to, subject, html, text });
 }
 
 export async function sendRequestStatusEmail(args: {

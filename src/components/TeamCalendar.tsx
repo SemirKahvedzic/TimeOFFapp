@@ -4,10 +4,11 @@ import {
   format, startOfMonth, endOfMonth, eachDayOfInterval, getDay,
   isSameMonth, isToday, isSameDay, min, max, differenceInCalendarDays,
 } from "date-fns";
-import { ChevronLeft, ChevronRight, CalendarPlus, X, Users, MessageSquare, PartyPopper, LayoutGrid, List as ListIcon, Inbox } from "lucide-react";
+import { ChevronLeft, ChevronRight, CalendarPlus, X, Users, MessageSquare, PartyPopper, LayoutGrid, List as ListIcon, Inbox, Clock, MapPin } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { Modal } from "./ui/Modal";
 import { RequestForm } from "./RequestForm";
+import { MeetingForm } from "./meetings/MeetingForm";
 import { Button } from "./ui/Button";
 import { Pill } from "./ui/Badge";
 import { Avatar } from "./Avatar";
@@ -47,10 +48,12 @@ interface AttendanceEntry {
 interface CalendarMeeting {
   id: string;
   title: string;
+  location: string | null;
   startsAt: string;
   endsAt: string;
   status: string;
   organizer: { id: string; name: string };
+  attendees: { user: { id: string; name: string } }[];
 }
 
 const ATTENDANCE_TONE: Record<string, string> = {
@@ -90,6 +93,7 @@ export function TeamCalendar({ onRequestCreated }: TeamCalendarProps) {
   const [confirmed, setConfirmed] = useState<{ start: Date; end: Date } | null>(null);
   const [isSelecting, setIsSelecting] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [showMeetingModal, setShowMeetingModal] = useState(false);
   const calendarRef = useRef<HTMLDivElement>(null);
 
   const monthKey = format(current, "yyyy-MM");
@@ -121,14 +125,14 @@ export function TeamCalendar({ onRequestCreated }: TeamCalendarProps) {
 
   useEffect(() => {
     function onMouseDown(e: MouseEvent) {
-      if (showModal) return;
+      if (showModal || showMeetingModal) return;
       if (calendarRef.current && !calendarRef.current.contains(e.target as Node)) {
         clearSelection();
       }
     }
     document.addEventListener("mousedown", onMouseDown);
     return () => document.removeEventListener("mousedown", onMouseDown);
-  }, [showModal]);
+  }, [showModal, showMeetingModal]);
 
   const days     = eachDayOfInterval({ start: startOfMonth(current), end: endOfMonth(current) });
   const startPad = getDay(startOfMonth(current));
@@ -183,6 +187,13 @@ export function TeamCalendar({ onRequestCreated }: TeamCalendarProps) {
 
   const panelRequests = confirmed
     ? requests.filter((r) => isoStr(r.startDate) <= dayStr(confirmed.end) && isoStr(r.endDate) >= dayStr(confirmed.start))
+    : [];
+  const panelMeetings = confirmed
+    ? meetings.filter((m) => {
+        const startDay = m.startsAt.slice(0, 10);
+        const endDay   = m.endsAt.slice(0, 10);
+        return startDay <= dayStr(confirmed.end) && endDay >= dayStr(confirmed.start);
+      })
     : [];
   const selTotalDays = confirmed ? differenceInCalendarDays(confirmed.end, confirmed.start) + 1 : 0;
   const selWorkDays = confirmed
@@ -457,70 +468,121 @@ export function TeamCalendar({ onRequestCreated }: TeamCalendarProps) {
           </div>
 
           <div className="px-5 py-4 flex flex-col sm:flex-row gap-5">
-            <div className="flex-1 space-y-3">
-              <div className="flex items-center gap-1.5">
-                <Users size={13} style={{ color: "var(--ink-mute)" }} />
-                <p className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--ink-mute)" }}>
-                  {panelRequests.length === 0 ? t("cal.noOneOff") : t("cal.peopleOff")}
-                </p>
-              </div>
-              {panelRequests.length === 0 ? (
-                <p className="text-sm italic" style={{ color: "var(--ink-faint)" }}>
-                  {t("cal.nobody")}
-                </p>
-              ) : (
-                <div className="space-y-2.5">
-                  {panelRequests.map((r) => {
-                    const color = r.leaveType?.color ?? "#10b981";
-                    return (
-                      <div
-                        key={r.id}
-                        className="flex items-start gap-3 p-3 rounded-2xl"
-                        style={{ background: "var(--surface)", boxShadow: "var(--soft-press-sm)" }}
-                      >
-                        <Avatar name={r.user.name} size={32} className="rounded-full shrink-0" imageUrl={r.user.avatarUrl} />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-sm font-bold" style={{ color: "var(--ink)" }}>{r.user.name}</span>
-                            <Pill
-                              label={`${r.leaveType?.emoji ?? "🌴"} ${r.leaveType?.label ?? "Vacation"}`}
-                              color={color}
-                            />
-                          </div>
-                          <p className="text-[11px] mt-0.5" style={{ color: "var(--ink-mute)" }}>
-                            {format(new Date(r.startDate), "MMM d")} → {format(new Date(r.endDate), "MMM d")}
-                          </p>
-                          {r.reason && (
-                            <div
-                              className="flex items-start gap-1.5 mt-2 px-3 py-2 rounded-xl"
-                              style={{ background: "var(--surface-2)" }}
-                            >
-                              <MessageSquare size={11} className="mt-0.5" style={{ color: "var(--ink-mute)" }} />
-                              <p className="text-xs italic" style={{ color: "var(--ink-soft)" }}>
-                                &ldquo;{r.reason}&rdquo;
-                              </p>
+            <div className="flex-1 space-y-4">
+              <div>
+                <div className="flex items-center gap-1.5 mb-3">
+                  <Users size={13} style={{ color: "var(--ink-mute)" }} />
+                  <p className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--ink-mute)" }}>
+                    {panelRequests.length === 0 ? t("cal.noOneOff") : t("cal.peopleOff")}
+                  </p>
+                </div>
+                {panelRequests.length === 0 ? (
+                  <p className="text-sm italic" style={{ color: "var(--ink-faint)" }}>
+                    {t("cal.nobody")}
+                  </p>
+                ) : (
+                  <div className="space-y-2.5">
+                    {panelRequests.map((r) => {
+                      const color = r.leaveType?.color ?? "#10b981";
+                      return (
+                        <div
+                          key={r.id}
+                          className="flex items-start gap-3 p-3 rounded-2xl"
+                          style={{ background: "var(--surface)", boxShadow: "var(--soft-press-sm)" }}
+                        >
+                          <Avatar name={r.user.name} size={32} className="rounded-full shrink-0" imageUrl={r.user.avatarUrl} />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-sm font-bold" style={{ color: "var(--ink)" }}>{r.user.name}</span>
+                              <Pill
+                                label={`${r.leaveType?.emoji ?? "🌴"} ${r.leaveType?.label ?? "Vacation"}`}
+                                color={color}
+                              />
                             </div>
-                          )}
+                            <p className="text-[11px] mt-0.5" style={{ color: "var(--ink-mute)" }}>
+                              {format(new Date(r.startDate), "MMM d")} → {format(new Date(r.endDate), "MMM d")}
+                            </p>
+                            {r.reason && (
+                              <div
+                                className="flex items-start gap-1.5 mt-2 px-3 py-2 rounded-xl"
+                                style={{ background: "var(--surface-2)" }}
+                              >
+                                <MessageSquare size={11} className="mt-0.5" style={{ color: "var(--ink-mute)" }} />
+                                <p className="text-xs italic" style={{ color: "var(--ink-soft)" }}>
+                                  &ldquo;{r.reason}&rdquo;
+                                </p>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {panelMeetings.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-1.5 mb-3">
+                    <Clock size={13} style={{ color: "var(--ink-mute)" }} />
+                    <p className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--ink-mute)" }}>
+                      {t("cal.meetingsScheduled", { count: panelMeetings.length })}
+                    </p>
+                  </div>
+                  <div className="space-y-2.5">
+                    {panelMeetings.map((m) => {
+                      const dayLabel = formatInCompanyTz(new Date(m.startsAt), timeZone, { weekday: "short", month: "short", day: "numeric" });
+                      const startTime = formatInCompanyTz(new Date(m.startsAt), timeZone, { hour: "2-digit", minute: "2-digit", hour12: false });
+                      const endTime = formatInCompanyTz(new Date(m.endsAt), timeZone, { hour: "2-digit", minute: "2-digit", hour12: false });
+                      return (
+                        <div
+                          key={m.id}
+                          className="flex items-start gap-3 p-3 rounded-2xl"
+                          style={{ background: "var(--surface)", boxShadow: "var(--soft-press-sm)" }}
+                        >
+                          <div
+                            className="w-9 h-9 rounded-xl flex items-center justify-center text-white shrink-0"
+                            style={{ background: "linear-gradient(135deg, var(--brand), var(--accent))" }}
+                          >
+                            <Users size={14} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold" style={{ color: "var(--ink)" }}>{m.title}</p>
+                            <p className="text-[11px] mt-0.5" style={{ color: "var(--ink-mute)" }}>
+                              {dayLabel} · {startTime}–{endTime} · {m.organizer.name}
+                              {" · "}{t("cal.peopleCount", { count: m.attendees.length + 1 })}
+                            </p>
+                            {m.location && (
+                              <div className="flex items-center gap-1.5 mt-1.5">
+                                <MapPin size={11} style={{ color: "var(--ink-faint)" }} />
+                                <p className="text-[11px] truncate" style={{ color: "var(--ink-soft)" }}>{m.location}</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>
 
             {session?.user && (
               <div
-                className="flex flex-col gap-2 sm:items-end sm:pl-5 sm:min-w-[180px]"
+                className="flex flex-col gap-2 sm:items-end sm:pl-5 sm:min-w-[200px]"
                 style={{ borderLeft: "1px solid var(--line)" }}
               >
                 <p className="text-[10px] font-bold uppercase tracking-wider hidden sm:block"
                    style={{ color: "var(--ink-mute)" }}>
                   {t("cal.quickAction")}
                 </p>
-                <Button onClick={() => setShowModal(true)}>
+                <Button onClick={() => setShowModal(true)} className="w-full">
                   <CalendarPlus size={14} />
                   {t("cal.requestOff")}
+                </Button>
+                <Button onClick={() => setShowMeetingModal(true)} className="w-full">
+                  <Users size={14} />
+                  {t("cal.scheduleMeeting")}
                 </Button>
                 <p className="text-[10px] sm:text-right" style={{ color: "var(--ink-faint)" }}>
                   {isSingle() ? t("cal.singleDay") : t("cal.workingDays", { count: selWorkDays })}
@@ -540,6 +602,25 @@ export function TeamCalendar({ onRequestCreated }: TeamCalendarProps) {
             clearSelection();
             fetchData();
             onRequestCreated?.();
+          }}
+        />
+      </Modal>
+
+      <Modal
+        open={showMeetingModal}
+        onClose={() => setShowMeetingModal(false)}
+        title={t("meetings.new.title")}
+        subtitle={t("meetings.new.subtitle")}
+        size="md"
+        dismissible={false}
+      >
+        <MeetingForm
+          timeZone={timeZone}
+          defaultDate={confirmed ? format(confirmed.start, "yyyy-MM-dd") : undefined}
+          onSuccess={() => {
+            setShowMeetingModal(false);
+            clearSelection();
+            fetchData();
           }}
         />
       </Modal>

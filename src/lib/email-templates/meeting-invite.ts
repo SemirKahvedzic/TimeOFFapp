@@ -13,6 +13,9 @@ interface Vars {
   attendees: { name: string }[];
   companyName: string;
   meetingsUrl: string;
+  /** When set, an Accept/Decline button pair is rendered inside the email. */
+  rsvpAcceptUrl?: string | null;
+  rsvpDeclineUrl?: string | null;
 }
 
 export function renderMeetingInviteEmail(vars: Vars): { html: string; text: string; subject: string } {
@@ -59,6 +62,25 @@ export function renderMeetingInviteEmail(vars: Vars): { html: string; text: stri
 </td></tr></table>`
     : "";
 
+  const rsvpBlock =
+    vars.kind !== "cancel" && vars.rsvpAcceptUrl && vars.rsvpDeclineUrl
+      ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 8px;">
+<tr><td align="center">
+<p style="margin:0 0 12px;font-size:11px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:#8d8aa3;">Your response</p>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0">
+<tr>
+<td bgcolor="#10b981" style="border-radius:999px;padding:0 4px 0 0;">
+<a href="${vars.rsvpAcceptUrl}" style="display:inline-block;padding:12px 24px;font-size:14px;font-weight:700;color:#ffffff;background-color:#10b981;text-decoration:none;border-radius:999px;letter-spacing:0.01em;">✓ Accept</a>
+</td>
+<td style="width:8px;">&nbsp;</td>
+<td bgcolor="#ffffff" style="border-radius:999px;border:1.5px solid #fecaca;">
+<a href="${vars.rsvpDeclineUrl}" style="display:inline-block;padding:11px 22px;font-size:14px;font-weight:700;color:#ef4444;background-color:#ffffff;text-decoration:none;border-radius:999px;letter-spacing:0.01em;">✗ Decline</a>
+</td>
+</tr>
+</table>
+</td></tr></table>`
+      : "";
+
   const intro =
     vars.kind === "invite"
       ? `Hi ${recipient}, ${organizer} has invited you to <strong style="color:#1a1a2e;">${title}</strong>.`
@@ -74,7 +96,8 @@ ${intro}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 8px;">
 ${detailRows.join("\n")}
 </table>
-${descBlock}`;
+${descBlock}
+${rsvpBlock}`;
 
   const ctaLabel =
     vars.kind === "cancel" ? "View meetings" : "View meeting";
@@ -112,6 +135,11 @@ ${descBlock}`;
     lines.push("");
     lines.push("Notes:");
     lines.push(vars.description);
+  }
+  if (vars.kind !== "cancel" && vars.rsvpAcceptUrl && vars.rsvpDeclineUrl) {
+    lines.push("");
+    lines.push(`Accept: ${vars.rsvpAcceptUrl}`);
+    lines.push(`Decline: ${vars.rsvpDeclineUrl}`);
   }
   lines.push("");
   lines.push(`View: ${vars.meetingsUrl}`);

@@ -1,6 +1,7 @@
 import { buildMeetingIcs } from "./ics";
-import { sendMeetingEmail } from "./server-email";
+import { sendMeetingEmail, sendMeetingRsvpNoticeEmail } from "./server-email";
 import { formatInCompanyTz } from "./utils";
+import { signRsvpToken } from "./rsvp-tokens";
 
 export interface MeetingForInvite {
   id: string;
@@ -19,10 +20,54 @@ interface SendArgs {
   kind: "invite" | "update" | "cancel";
   company: { id: string; name: string; timeZone: string };
   meetingsUrl: string;
+  origin: string;
   recipients: { id: string; name: string; email: string }[];
 }
 
-export async function sendMeetingInvites({ meeting, kind, company, meetingsUrl, recipients }: SendArgs) {
+/**
+ * Notify the organizer that an attendee has changed their RSVP. Skipped when
+ * the organizer is the actor (e.g. someone updating their own meeting).
+ */
+export async function notifyOrganizerOfRsvp(args: {
+  meeting: {
+    id: string;
+    title: string;
+    startsAt: Date;
+    endsAt: Date;
+    organizer: { id: string; name: string; email: string };
+  };
+  attendee: { id: string; name: string };
+  status: "accepted" | "declined";
+  company: { name: string; timeZone: string };
+  meetingsUrl: string;
+}) {
+  // Don't send if the organizer somehow triggered this against themselves.
+  if (args.attendee.id === args.meeting.organizer.id) return;
+
+  const dayLabel = formatInCompanyTz(args.meeting.startsAt, args.company.timeZone, {
+    weekday: "short", month: "short", day: "numeric",
+  });
+  const startTime = formatInCompanyTz(args.meeting.startsAt, args.company.timeZone, {
+    hour: "2-digit", minute: "2-digit", hour12: false,
+  });
+  const endTime = formatInCompanyTz(args.meeting.endsAt, args.company.timeZone, {
+    hour: "2-digit", minute: "2-digit", hour12: false,
+  });
+  const whenText = `${dayLabel} · ${startTime}–${endTime} (${args.company.timeZone})`;
+
+  await sendMeetingRsvpNoticeEmail({
+    to: args.meeting.organizer.email,
+    organizerName: args.meeting.organizer.name,
+    attendeeName: args.attendee.name,
+    status: args.status,
+    meetingTitle: args.meeting.title,
+    whenText,
+    companyName: args.company.name,
+    meetingsUrl: args.meetingsUrl,
+  }).catch((err) => console.error(`[meetings] organizer notice failed:`, err));
+}
+
+export async function sendMeetingInvites({ meeting, kind, company, meetingsUrl, origin, recipients }: SendArgs) {
   if (recipients.length === 0) return;
 
   const ics = buildMeetingIcs({
@@ -52,8 +97,17 @@ export async function sendMeetingInvites({ meeting, kind, company, meetingsUrl, 
   const whenText = `${dayLabel} · ${startTime}–${endTime} (${company.timeZone})`;
 
   await Promise.all(
-    recipients.map((r) =>
-      sendMeetingEmail({
+    recipients.map((r) => {
+      // Organizer's copy gets no RSVP buttons (they're hosting the meeting).
+      // Attendees get tokenized one-click links so they can respond from any
+      // device without logging in.
+      const isOrganizer = r.id === meeting.organizer.id;
+      const acceptUrl = isOrganizer ? null
+        : `${origin}/rsvp?token=${encodeURIComponent(signRsvpToken(meeting.id, r.id, "accepted"))}`;
+      const declineUrl = isOrganizer ? null
+        : `${origin}/rsvp?token=${encodeURIComponent(signRsvpToken(meeting.id, r.id, "declined"))}`;
+
+      return sendMeetingEmail({
         to: r.email,
         recipientName: r.name,
         kind,
@@ -66,7 +120,9 @@ export async function sendMeetingInvites({ meeting, kind, company, meetingsUrl, 
         companyName: company.name,
         meetingsUrl,
         ics,
-      }).catch((err) => console.error(`[meetings] email to ${r.email} failed:`, err)),
-    ),
+        rsvpAcceptUrl: acceptUrl,
+        rsvpDeclineUrl: declineUrl,
+      }).catch((err) => console.error(`[meetings] email to ${r.email} failed:`, err));
+    }),
   );
 }

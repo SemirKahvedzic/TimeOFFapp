@@ -20,6 +20,8 @@ interface MeetingFormProps {
     endsAt: string;
     attendees: { user: { id: string; name: string } }[];
   };
+  /** When creating, prefill the date to this YYYY-MM-DD (e.g. selected from a calendar). Time defaults to 10:00 company-tz. */
+  defaultDate?: string;
   onSuccess: () => void;
 }
 
@@ -29,7 +31,7 @@ interface Conflict {
   label: string;
 }
 
-export function MeetingForm({ timeZone, initial, onSuccess }: MeetingFormProps) {
+export function MeetingForm({ timeZone, initial, defaultDate, onSuccess }: MeetingFormProps) {
   const t = useT();
   const { data: session } = useSession();
   const [title, setTitle]             = useState(initial?.title ?? "");
@@ -38,12 +40,14 @@ export function MeetingForm({ timeZone, initial, onSuccess }: MeetingFormProps) 
 
   const [startWall, setStartWall] = useState(() => {
     if (initial?.startsAt) return utcToTzWallClock(new Date(initial.startsAt), timeZone);
+    if (defaultDate) return `${defaultDate}T10:00`;
     const now = new Date();
     now.setMinutes(now.getMinutes() + 30 - (now.getMinutes() % 30), 0, 0);
     return utcToTzWallClock(now, timeZone);
   });
   const [endWall, setEndWall] = useState(() => {
     if (initial?.endsAt) return utcToTzWallClock(new Date(initial.endsAt), timeZone);
+    if (defaultDate) return `${defaultDate}T11:00`;
     const now = new Date();
     now.setMinutes(now.getMinutes() + 30 - (now.getMinutes() % 30), 0, 0);
     return utcToTzWallClock(new Date(now.getTime() + 60 * 60_000), timeZone);

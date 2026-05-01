@@ -45,9 +45,12 @@ export async function GET(req: NextRequest) {
     prisma.meeting.findMany({
       where: {
         status: "scheduled",
+        // Visible only to the organizer + attendees who have accepted.
+        // Pending invites stay off the calendar until the user RSVPs yes
+        // from the dashboard widget.
         OR: [
           { organizerId: session.user.id },
-          { attendees: { some: { userId: session.user.id } } },
+          { attendees: { some: { userId: session.user.id, status: "accepted" } } },
         ],
         ...(startDate && endDate ? { startsAt: { lte: endDate }, endsAt: { gte: startDate } } : {}),
       },

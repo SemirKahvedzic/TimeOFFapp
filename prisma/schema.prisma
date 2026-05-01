@@ -183,15 +183,18 @@ model Meeting {
 }
 
 model MeetingAttendee {
-  id        String @id @default(cuid())
-  meetingId String
-  userId    String
+  id          String    @id @default(cuid())
+  meetingId   String
+  userId      String
+  status      String    @default("pending") // "pending" | "accepted" | "declined"
+  respondedAt DateTime?
 
   meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
   user    User    @relation("MeetingAttendee", fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([meetingId, userId])
   @@index([userId])
+  @@index([userId, status])
 }
 
 model Attendance {

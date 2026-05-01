@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import {
   Save, Trash2, Plus, Building2, Palette, Briefcase, PartyPopper,
-  Link as LinkIcon, Copy, Check, Pencil, Upload, ImageIcon, Sun, Moon,
+  Link as LinkIcon, Copy, Check, Pencil, Upload, ImageIcon,
   RotateCcw, Lock,
 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -247,7 +247,6 @@ function BrandSection({ company, onSaved }: { company: Company; onSaved: () => v
   const [tagline, setTagline] = useState(company.tagline ?? "");
   const [brandColor, setBrandColor] = useState(company.brandColor);
   const [accentColor, setAccentColor] = useState(company.accentColor);
-  const [theme, setTheme] = useState<"light" | "dark">((company.theme as "light" | "dark") ?? "light");
   const [workWeek, setWorkWeek] = useState(new Set(company.workWeek.split(",").map(Number)));
   const [timeZone, setTimeZone] = useState(company.timeZone);
   const [countryCode, setCountryCode] = useState(company.countryCode);
@@ -263,7 +262,6 @@ function BrandSection({ company, onSaved }: { company: Company; onSaved: () => v
     tagline !== (company.tagline ?? "") ||
     brandColor !== company.brandColor ||
     accentColor !== company.accentColor ||
-    theme !== company.theme ||
     workWeekStr !== company.workWeek ||
     timeZone !== company.timeZone ||
     countryCode !== company.countryCode ||
@@ -298,7 +296,7 @@ function BrandSection({ company, onSaved }: { company: Company; onSaved: () => v
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name, tagline, brandColor, accentColor, logoUrl, theme,
+          name, tagline, brandColor, accentColor, logoUrl,
           workWeek: Array.from(workWeek).sort((a, b) => a - b).join(","),
           timeZone, countryCode,
         }),
@@ -306,9 +304,8 @@ function BrandSection({ company, onSaved }: { company: Company; onSaved: () => v
       if (!res.ok) throw new Error("Failed");
       toast.success(t("settings.brand.toast.saved"));
 
-      // Brand colors, theme, language, and logo all flow through the root
-      // layout's server render. Hard-reload so the new values land in
-      // <html data-theme>, the brand CSS vars, and the LanguageProvider.
+      // Brand colors and logo flow through the root layout's server render.
+      // Hard-reload so the new values land in the brand CSS vars.
       window.location.reload();
     } catch {
       toast.error(t("settings.brand.toast.saveFailed"));
@@ -403,28 +400,6 @@ function BrandSection({ company, onSaved }: { company: Company; onSaved: () => v
         )}
       </div>
 
-      {/* Theme */}
-      <div>
-        <FieldLabel>{t("settings.brand.theme")}</FieldLabel>
-        <div
-          className="grid grid-cols-2 gap-2 p-1 rounded-2xl max-w-md"
-          style={{ background: "var(--surface)", boxShadow: "var(--soft-press-sm)" }}
-        >
-          <ThemeChoice
-            active={theme === "light"}
-            onClick={() => setTheme("light")}
-            icon={<Sun size={14} />}
-            label={t("settings.brand.theme.light")}
-          />
-          <ThemeChoice
-            active={theme === "dark"}
-            onClick={() => setTheme("dark")}
-            icon={<Moon size={14} />}
-            label={t("settings.brand.theme.dark")}
-          />
-        </div>
-      </div>
-
       <div>
         <FieldLabel>{t("settings.brand.workWeek")}</FieldLabel>
         <div className="flex flex-wrap gap-2">
@@ -509,33 +484,6 @@ function BrandSection({ company, onSaved }: { company: Company; onSaved: () => v
         {t("btn.save")}
       </Button>
     </fieldset>
-  );
-}
-
-function ThemeChoice({
-  active, onClick, icon, label,
-}: { active: boolean; onClick: () => void; icon: React.ReactNode; label: string }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-[12px] font-bold transition-all duration-200 active:scale-[0.97]"
-      style={
-        active
-          ? {
-              background: "var(--surface-2)",
-              color: "var(--brand)",
-              boxShadow: "var(--soft-1)",
-            }
-          : {
-              color: "var(--ink-soft)",
-              background: "transparent",
-            }
-      }
-    >
-      {icon}
-      {label}
-    </button>
   );
 }
 

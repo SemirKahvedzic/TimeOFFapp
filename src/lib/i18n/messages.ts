@@ -112,6 +112,8 @@ const en = {
   "btn.remove":      "Remove",
   "btn.signIn":      "Sign in",
   "btn.edit":        "Edit",
+  "btn.accept":      "Accept",
+  "btn.decline":     "Decline",
 
   // ── Attendance widget ────────────────────────────────────────
   "att.title":         "Today's status",
@@ -205,7 +207,6 @@ const en = {
   "settings.brand.tagline":   "Tagline",
   "settings.brand.brandColor":"Brand color",
   "settings.brand.accentColor":"Accent color",
-  "settings.brand.theme":     "Theme",
   "settings.brand.theme.light": "Light",
   "settings.brand.theme.dark":  "Dark",
   "settings.brand.language":  "Language",
@@ -277,6 +278,9 @@ const en = {
   "cal.hint.idle":   "Click a day to select, then click again to create a range",
   "cal.hint.active": "Click another day to finish the range — same day for single day",
   "cal.quickAction": "Quick action",
+  "cal.scheduleMeeting": "Schedule meeting",
+  "cal.meetingsScheduled": "{count} meeting(s) scheduled",
+  "cal.peopleCount": "{count} people",
   "cal.nonWorking":  "Non-working day",
   "cal.view.month":  "Month",
   "cal.view.list":   "List",
@@ -477,6 +481,15 @@ const en = {
   "meetings.cancel.title":        "Cancel this meeting?",
   "meetings.cancel.body":         "Everyone invited to \"{title}\" will get a cancellation email.",
   "meetings.cancel.confirm":      "Yes, cancel",
+
+  // ── Meeting invites widget ──────────────────────────────────
+  "invites.title":           "Pending meeting invites",
+  "invites.pendingCount":    "{count} waiting",
+  "invites.from":            "From {name}",
+  "invites.peopleCount":     "{count} people",
+  "invites.toast.accepted":  "Accepted — meeting added to your calendar",
+  "invites.toast.declined":  "Declined",
+  "invites.toast.failed":    "Couldn't update your response",
 } as const;
 
 type Key = keyof typeof en;
@@ -582,6 +595,8 @@ const de: Record<Key, string> = {
   "btn.remove":      "Entfernen",
   "btn.signIn":      "Anmelden",
   "btn.edit":        "Bearbeiten",
+  "btn.accept":      "Annehmen",
+  "btn.decline":     "Ablehnen",
 
   "att.title":         "Heutiger Status",
   "att.present":       "Anwesend",
@@ -668,7 +683,6 @@ const de: Record<Key, string> = {
   "settings.brand.tagline":   "Slogan",
   "settings.brand.brandColor":"Markenfarbe",
   "settings.brand.accentColor":"Akzentfarbe",
-  "settings.brand.theme":     "Design",
   "settings.brand.theme.light": "Hell",
   "settings.brand.theme.dark":  "Dunkel",
   "settings.brand.language":  "Sprache",
@@ -735,6 +749,9 @@ const de: Record<Key, string> = {
   "cal.hint.idle":   "Klicke einen Tag, dann nochmal für einen Bereich",
   "cal.hint.active": "Klicke einen weiteren Tag — gleicher Tag für einzelnen Tag",
   "cal.quickAction": "Schnellaktion",
+  "cal.scheduleMeeting": "Meeting planen",
+  "cal.meetingsScheduled": "{count} Meeting(s) geplant",
+  "cal.peopleCount": "{count} Personen",
   "cal.nonWorking":  "Nicht-Arbeitstag",
   "cal.view.month":  "Monat",
   "cal.view.list":   "Liste",
@@ -928,6 +945,15 @@ const de: Record<Key, string> = {
   "meetings.cancel.title":        "Meeting absagen?",
   "meetings.cancel.body":         "Alle Eingeladenen zu \"{title}\" erhalten eine Absage-Mail.",
   "meetings.cancel.confirm":      "Ja, absagen",
+
+  // ── Meeting invites widget ──────────────────────────────────
+  "invites.title":           "Offene Meeting-Einladungen",
+  "invites.pendingCount":    "{count} offen",
+  "invites.from":            "Von {name}",
+  "invites.peopleCount":     "{count} Personen",
+  "invites.toast.accepted":  "Angenommen — Meeting steht im Kalender",
+  "invites.toast.declined":  "Abgelehnt",
+  "invites.toast.failed":    "Antwort konnte nicht gespeichert werden",
 };
 
 const it: Record<Key, string> = {
@@ -1031,6 +1057,8 @@ const it: Record<Key, string> = {
   "btn.remove":      "Rimuovi",
   "btn.signIn":      "Accedi",
   "btn.edit":        "Modifica",
+  "btn.accept":      "Accetta",
+  "btn.decline":     "Rifiuta",
 
   "att.title":         "Stato di oggi",
   "att.present":       "Presente",
@@ -1117,7 +1145,6 @@ const it: Record<Key, string> = {
   "settings.brand.tagline":   "Slogan",
   "settings.brand.brandColor":"Colore brand",
   "settings.brand.accentColor":"Colore accento",
-  "settings.brand.theme":     "Tema",
   "settings.brand.theme.light": "Chiaro",
   "settings.brand.theme.dark":  "Scuro",
   "settings.brand.language":  "Lingua",
@@ -1184,6 +1211,9 @@ const it: Record<Key, string> = {
   "cal.hint.idle":   "Clicca un giorno, poi clicca di nuovo per creare un intervallo",
   "cal.hint.active": "Clicca un altro giorno per chiudere — stesso giorno per uno solo",
   "cal.quickAction": "Azione rapida",
+  "cal.scheduleMeeting": "Pianifica riunione",
+  "cal.meetingsScheduled": "{count} riunione/i pianificata/e",
+  "cal.peopleCount": "{count} persone",
   "cal.nonWorking":  "Giorno non lavorativo",
   "cal.view.month":  "Mese",
   "cal.view.list":   "Elenco",
@@ -1377,6 +1407,15 @@ const it: Record<Key, string> = {
   "meetings.cancel.title":        "Annullare la riunione?",
   "meetings.cancel.body":         "Tutti gli invitati a \"{title}\" riceveranno un'email di annullamento.",
   "meetings.cancel.confirm":      "Sì, annulla",
+
+  // ── Meeting invites widget ──────────────────────────────────
+  "invites.title":           "Inviti riunione in sospeso",
+  "invites.pendingCount":    "{count} in attesa",
+  "invites.from":            "Da {name}",
+  "invites.peopleCount":     "{count} persone",
+  "invites.toast.accepted":  "Accettato — riunione aggiunta al calendario",
+  "invites.toast.declined":  "Rifiutato",
+  "invites.toast.failed":    "Impossibile salvare la risposta",
 };
 
 export const messages: Record<Lang, Record<Key, string>> = { en, de, it };

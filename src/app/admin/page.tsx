@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import { Button } from "@/components/ui/Button";
 import { RequestCard } from "@/components/RequestCard";
 import { TeamCalendar } from "@/components/TeamCalendar";
+import { UpcomingMeetingInvites } from "@/components/meetings/UpcomingMeetingInvites";
 import { Avatar } from "@/components/Avatar";
 import { Pill } from "@/components/ui/Badge";
 import { formatDate } from "@/lib/utils";
@@ -143,6 +144,8 @@ export default function AdminDashboard() {
         <KpiTile label={t("admin.overview.kpi.approved")} value={approved.length} icon={CheckCircle} color="#10b981" />
         <KpiTile label={t("admin.overview.kpi.rejected")} value={rejected.length} icon={XCircle}     color="#ef4444" />
       </div>
+
+      <UpcomingMeetingInvites />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Pending */}

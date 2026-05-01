@@ -208,6 +208,7 @@ export function MeetingCard({ meeting, currentUserId, isAdmin, timeZone, onUpdat
         onClose={() => setShowEdit(false)}
         title={t("meetings.edit.title")}
         size="md"
+        dismissible={false}
       >
         <MeetingForm
           timeZone={timeZone}

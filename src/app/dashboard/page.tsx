@@ -9,6 +9,7 @@ import { RequestCard } from "@/components/RequestCard";
 import { AttendanceWidget } from "@/components/AttendanceWidget";
 import { BalanceCard } from "@/components/BalanceCard";
 import { UpcomingHolidays } from "@/components/UpcomingHolidays";
+import { UpcomingMeetingInvites } from "@/components/meetings/UpcomingMeetingInvites";
 import { Paginator } from "@/components/ui/Paginator";
 import { useT } from "@/lib/i18n/context";
 import type { MessageKey } from "@/lib/i18n/messages";
@@ -136,6 +137,8 @@ export default function EmployeeDashboard() {
       </div>
 
       <AttendanceWidget />
+
+      <UpcomingMeetingInvites />
 
       <BalanceCard />
 

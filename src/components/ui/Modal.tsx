@@ -9,6 +9,12 @@ interface ModalProps {
   subtitle?: string;
   children: ReactNode;
   size?: "sm" | "md" | "lg";
+  /**
+   * When false, clicking the backdrop and pressing Escape are no-ops; the
+   * modal can only be closed via the X button. Use for forms where losing
+   * half-entered data on a stray click would be annoying.
+   */
+  dismissible?: boolean;
 }
 
 const SIZES = {
@@ -17,14 +23,15 @@ const SIZES = {
   lg: "max-w-2xl",
 };
 
-export function Modal({ open, onClose, title, subtitle, children, size = "md" }: ModalProps) {
+export function Modal({ open, onClose, title, subtitle, children, size = "md", dismissible = true }: ModalProps) {
   useEffect(() => {
+    if (!dismissible) return;
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     if (open) document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
-  }, [open, onClose]);
+  }, [open, onClose, dismissible]);
 
   if (!open) return null;
 
@@ -33,7 +40,7 @@ export function Modal({ open, onClose, title, subtitle, children, size = "md" }:
       <div
         className="absolute inset-0 backdrop-blur-md"
         style={{ background: "rgba(28, 22, 64, 0.42)" }}
-        onClick={onClose}
+        onClick={dismissible ? onClose : undefined}
       />
       <div
         className={`relative z-10 w-full ${SIZES[size]} rounded-[28px] overflow-hidden`}

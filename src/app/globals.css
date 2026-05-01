@@ -112,9 +112,19 @@
 [data-theme="dark"] ::-webkit-scrollbar-thumb       { background: rgba(255, 255, 255, 0.12); }
 [data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.22); }
 
-/* Date pickers and color swatches read poorly without help in dark mode */
-[data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.85); opacity: 0.7; }
-[data-theme="dark"] input[type="date"] { color-scheme: dark; }
+/* Date pickers and color swatches read poorly without help in dark mode.
+   brightness(0) flattens the icon to pure black first, then invert(1)
+   maps it to pure white — independent of the browser's source SVG. */
+[data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator,
+[data-theme="dark"] input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+[data-theme="dark"] input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: brightness(0) invert(1) !important;
+  opacity: 1 !important;
+  cursor: pointer;
+}
+[data-theme="dark"] input[type="date"],
+[data-theme="dark"] input[type="datetime-local"],
+[data-theme="dark"] input[type="time"] { color-scheme: dark; }
 
 @theme inline {
   --font-sans: var(--font-geist);

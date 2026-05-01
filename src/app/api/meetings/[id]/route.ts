@@ -158,6 +158,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         kind: "cancel",
         company,
         meetingsUrl,
+        origin,
         recipients: removed,
       }).catch((err) => console.error("[meetings.PATCH] cancel-removed emails failed:", err));
     }
@@ -172,6 +173,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         kind: "update",
         company,
         meetingsUrl,
+        origin,
         recipients: existingStillAttending,
       }).catch((err) => console.error("[meetings.PATCH] update emails failed:", err));
     }
@@ -183,6 +185,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         kind: "invite",
         company,
         meetingsUrl,
+        origin,
         recipients: added,
       }).catch((err) => console.error("[meetings.PATCH] invite-added emails failed:", err));
     }
@@ -235,6 +238,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       kind: "cancel",
       company,
       meetingsUrl: `${origin}/meetings`,
+      origin,
       recipients: meeting.attendees.map((a) => a.user),
     }).catch((err) => console.error("[meetings.DELETE] cancel emails failed:", err));
   }
