@@ -116,7 +116,7 @@ export default function EmployeeDashboard() {
           className="absolute -top-12 -right-10 w-48 h-48 rounded-full opacity-30 pointer-events-none"
           style={{ background: "linear-gradient(135deg, var(--brand), var(--accent))", filter: "blur(40px)" }}
         />
-        <div className="relative flex items-start justify-between gap-4">
+        <div className="relative flex items-start justify-between gap-4 flex-wrap">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.2em]" style={{ color: "var(--ink-mute)" }}>
               {greeting}

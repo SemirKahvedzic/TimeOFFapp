@@ -13,7 +13,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const sizes = {
       sm: "px-3.5 py-1.5 text-xs",
       md: "px-5 py-2.5 text-sm",
-      lg: "px-7 py-3.5 text-base",
+      lg: "px-5 py-2.5 text-sm sm:px-7 sm:py-3.5 sm:text-base",
     };
 
     const base =

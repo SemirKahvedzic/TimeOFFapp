@@ -178,29 +178,33 @@ export function RequestCard({ request, showUser, isAdmin, onUpdate }: RequestCar
                   <button
                     onClick={approve}
                     disabled={!!loading}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white transition-all duration-150 active:scale-[0.97] disabled:opacity-60"
+                    aria-label={t("btn.approve")}
+                    title={t("btn.approve")}
+                    className="inline-flex items-center sm:gap-1.5 p-1.5 sm:px-3 sm:py-1.5 rounded-lg text-xs font-bold text-white transition-all duration-150 active:scale-[0.97] disabled:opacity-60"
                     style={{
                       background: "var(--ok)",
                       boxShadow: "0 6px 16px -6px color-mix(in oklab, var(--ok) 60%, transparent)",
                     }}
                   >
                     {loading === "approve"
-                      ? <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      : <Check size={13} />}
-                    {t("btn.approve")}
+                      ? <span className="w-3.5 h-3.5 sm:w-3 sm:h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      : <Check size={14} className="sm:w-[13px] sm:h-[13px]" />}
+                    <span className="hidden sm:inline">{t("btn.approve")}</span>
                   </button>
                   <button
                     onClick={() => setShowReject(true)}
                     disabled={!!loading}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 active:scale-[0.97] disabled:opacity-60 hover:bg-[var(--err-bg)]"
+                    aria-label={t("btn.reject")}
+                    title={t("btn.reject")}
+                    className="inline-flex items-center sm:gap-1.5 p-1.5 sm:px-3 sm:py-1.5 rounded-lg text-xs font-bold transition-all duration-150 active:scale-[0.97] disabled:opacity-60 hover:bg-[var(--err-bg)]"
                     style={{
                       color: "var(--err)",
                       background: "transparent",
                       border: "1.5px solid color-mix(in oklab, var(--err) 35%, transparent)",
                     }}
                   >
-                    <X size={13} />
-                    {t("btn.reject")}
+                    <X size={14} className="sm:w-[13px] sm:h-[13px]" />
+                    <span className="hidden sm:inline">{t("btn.reject")}</span>
                   </button>
                 </>
               )}
