@@ -40,11 +40,7 @@ export async function generateMetadata(): Promise<Metadata> {
     creator: siteName,
     publisher: siteName,
     alternates: { canonical: "/" },
-    icons: {
-      icon: "/favicon.ico",
-      shortcut: "/favicon.ico",
-      apple: "/favicon.ico",
-    },
+    // Icons are auto-injected by Next.js from src/app/icon.svg.
     manifest: "/manifest.webmanifest",
     openGraph: {
       type: "website",
