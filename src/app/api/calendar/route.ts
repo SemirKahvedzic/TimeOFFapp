@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
     endDate = new Date(year, m, 0, 23, 59, 59);
   }
 
-  const [requests, holidays, company, attendances] = await Promise.all([
+  const [requests, holidays, company, attendances, meetings] = await Promise.all([
     prisma.timeOffRequest.findMany({
       where: {
         ...(startDate && endDate ? { AND: [{ startDate: { lte: endDate } }, { endDate: { gte: startDate } }] } : {}),
@@ -42,12 +42,29 @@ export async function GET(req: NextRequest) {
       },
       orderBy: { date: "asc" },
     }),
+    prisma.meeting.findMany({
+      where: {
+        status: "scheduled",
+        OR: [
+          { organizerId: session.user.id },
+          { attendees: { some: { userId: session.user.id } } },
+        ],
+        ...(startDate && endDate ? { startsAt: { lte: endDate }, endsAt: { gte: startDate } } : {}),
+      },
+      include: {
+        organizer: { select: { id: true, name: true } },
+        attendees: { include: { user: { select: { id: true, name: true } } } },
+      },
+      orderBy: { startsAt: "asc" },
+    }),
   ]);
 
   return NextResponse.json({
     requests,
     holidays,
     workWeek: company.workWeek,
+    timeZone: company.timeZone,
     attendances,
+    meetings,
   });
 }

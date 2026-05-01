@@ -121,6 +121,8 @@ model User {
   balances         LeaveBalance[]
   auditLogs        AuditLog[] @relation("AuditActor")
   passwordResetTokens PasswordResetToken[]
+  organizedMeetings   Meeting[]         @relation("MeetingOrganizer")
+  meetingInvites      MeetingAttendee[] @relation("MeetingAttendee")
 }
 
 model PasswordResetToken {
@@ -158,6 +160,38 @@ model TimeOffRequest {
   user       User       @relation("RequestedBy", fields: [userId], references: [id], onDelete: Cascade)
   reviewedBy User?      @relation("ReviewedBy", fields: [reviewedById], references: [id])
   leaveType  LeaveType? @relation(fields: [leaveTypeId], references: [id], onDelete: SetNull)
+}
+
+model Meeting {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  location    String?
+  startsAt    DateTime
+  endsAt      DateTime
+  organizerId String
+  status      String   @default("scheduled") // "scheduled" | "cancelled"
+  sequence    Int      @default(0)            // bumped on every update; mirrored into the .ics SEQUENCE so external calendars supersede prior copies cleanly
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  organizer User              @relation("MeetingOrganizer", fields: [organizerId], references: [id], onDelete: Restrict)
+  attendees MeetingAttendee[]
+
+  @@index([startsAt])
+  @@index([organizerId, startsAt])
+}
+
+model MeetingAttendee {
+  id        String @id @default(cuid())
+  meetingId String
+  userId    String
+
+  meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  user    User    @relation("MeetingAttendee", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([meetingId, userId])
+  @@index([userId])
 }
 
 model Attendance {

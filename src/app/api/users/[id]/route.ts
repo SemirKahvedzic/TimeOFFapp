@@ -134,6 +134,23 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ error: "Only owner-admins can delete admins" }, { status: 403 });
   }
 
+  // Block deletion if the user is the organizer of any future meeting —
+  // Meeting.organizer has onDelete: Restrict, so the database would reject
+  // the delete anyway. Surface a clear error instead of a Prisma stack trace.
+  const futureOrganizedCount = await prisma.meeting.count({
+    where: {
+      organizerId: id,
+      status: "scheduled",
+      endsAt: { gte: new Date() },
+    },
+  });
+  if (futureOrganizedCount > 0) {
+    return NextResponse.json(
+      { error: `Cannot delete — this user is organizing ${futureOrganizedCount} upcoming meeting(s). Cancel or reassign them first.` },
+      { status: 400 },
+    );
+  }
+
   await prisma.user.delete({ where: { id } });
   await audit({ actorId: session.user.id, action: "user.deleted", targetType: "User", targetId: id });
   return NextResponse.json({ success: true });

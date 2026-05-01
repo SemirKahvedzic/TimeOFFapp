@@ -2,6 +2,7 @@ import { Resend } from "resend";
 import { renderPasswordResetEmail } from "./email-templates/password-reset";
 import { renderInvitationEmail } from "./email-templates/invitation";
 import { renderRequestStatusEmail } from "./email-templates/request-status";
+import { renderMeetingInviteEmail, type MeetingEmailKind } from "./email-templates/meeting-invite";
 
 const apiKey = process.env.RESEND_API_KEY;
 const fromAddress =
@@ -9,13 +10,37 @@ const fromAddress =
 
 const resend = apiKey ? new Resend(apiKey) : null;
 
-async function deliver(args: { to: string; subject: string; html: string; text: string; logHint?: string }) {
-  const { to, subject, html, text, logHint } = args;
+interface EmailAttachment {
+  filename: string;
+  content: string;          // raw text or base64
+  contentType?: string;     // defaults to application/octet-stream
+}
+
+async function deliver(args: {
+  to: string;
+  subject: string;
+  html: string;
+  text: string;
+  logHint?: string;
+  attachments?: EmailAttachment[];
+}) {
+  const { to, subject, html, text, logHint, attachments } = args;
   if (!resend) {
     console.log(`[server-email] RESEND_API_KEY not set. Would send "${subject}" to ${to}${logHint ? ` (${logHint})` : ""}`);
     return { ok: true, dev: true };
   }
-  const { error } = await resend.emails.send({ from: fromAddress, to, subject, text, html });
+  const { error } = await resend.emails.send({
+    from: fromAddress,
+    to,
+    subject,
+    text,
+    html,
+    attachments: attachments?.map((a) => ({
+      filename: a.filename,
+      content: a.content,
+      contentType: a.contentType,
+    })),
+  });
   if (error) {
     console.error("[server-email] Resend error:", error);
     throw new Error("Failed to send email");
@@ -62,6 +87,48 @@ export async function sendInvitationEmail(args: {
     subject: `You've been invited to ${args.companyName}`,
     html,
     text,
+  });
+}
+
+export async function sendMeetingEmail(args: {
+  to: string;
+  recipientName: string;
+  kind: MeetingEmailKind;
+  meetingTitle: string;
+  organizerName: string;
+  whenText: string;
+  location?: string | null;
+  description?: string | null;
+  attendees: { name: string }[];
+  companyName: string;
+  meetingsUrl: string;
+  ics: string;
+}) {
+  const { html, text, subject } = renderMeetingInviteEmail({
+    kind: args.kind,
+    recipientName: args.recipientName,
+    meetingTitle: args.meetingTitle,
+    organizerName: args.organizerName,
+    whenText: args.whenText,
+    location: args.location,
+    description: args.description,
+    attendees: args.attendees,
+    companyName: args.companyName,
+    meetingsUrl: args.meetingsUrl,
+  });
+  const method = args.kind === "cancel" ? "CANCEL" : "REQUEST";
+  return deliver({
+    to: args.to,
+    subject,
+    html,
+    text,
+    attachments: [
+      {
+        filename: "meeting.ics",
+        content: args.ics,
+        contentType: `text/calendar; method=${method}; charset=utf-8`,
+      },
+    ],
   });
 }
 

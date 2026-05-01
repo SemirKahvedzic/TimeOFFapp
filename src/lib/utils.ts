@@ -72,3 +72,50 @@ export function formatLeaveDays(n: number): string {
   if (Number.isInteger(n)) return `${n} ${n === 1 ? "day" : "days"}`;
   return `${n} days`;
 }
+
+function tzParts(date: Date, tz: string) {
+  const dtf = new Intl.DateTimeFormat("en-US", {
+    timeZone: tz,
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", second: "2-digit",
+    hour12: false,
+  });
+  const parts = dtf.formatToParts(date);
+  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value ?? 0);
+  return {
+    year: get("year"), month: get("month"), day: get("day"),
+    hour: get("hour") % 24, minute: get("minute"), second: get("second"),
+  };
+}
+
+/**
+ * Convert a wall-clock string like "2025-05-15T14:30" — entered by a user
+ * who's reading the form in `timeZone` — into the corresponding UTC Date.
+ * Handles DST correctly for the date in question.
+ */
+export function tzWallClockToUtc(wallClock: string, timeZone: string): Date {
+  const naive = new Date(wallClock + (wallClock.length === 16 ? ":00" : "") + "Z");
+  const p = tzParts(naive, timeZone);
+  const tzAsUtcMs = Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second);
+  const offsetMs = tzAsUtcMs - naive.getTime();
+  return new Date(naive.getTime() - offsetMs);
+}
+
+/**
+ * Inverse of tzWallClockToUtc — render a UTC Date as a "yyyy-MM-ddTHH:mm"
+ * string suitable for prefilling <input type="datetime-local">.
+ */
+export function utcToTzWallClock(date: Date, timeZone: string): string {
+  const p = tzParts(date, timeZone);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${p.year}-${pad(p.month)}-${pad(p.day)}T${pad(p.hour)}:${pad(p.minute)}`;
+}
+
+/** Format a UTC Date in a specific company time zone for display. */
+export function formatInCompanyTz(
+  date: Date | string,
+  timeZone: string,
+  options: Intl.DateTimeFormatOptions,
+): string {
+  return new Intl.DateTimeFormat("en-US", { timeZone, ...options }).format(new Date(date));
+}

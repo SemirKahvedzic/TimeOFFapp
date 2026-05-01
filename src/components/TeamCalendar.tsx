@@ -11,7 +11,7 @@ import { RequestForm } from "./RequestForm";
 import { Button } from "./ui/Button";
 import { Pill } from "./ui/Badge";
 import { Avatar } from "./Avatar";
-import { cn } from "@/lib/utils";
+import { cn, formatInCompanyTz } from "@/lib/utils";
 import { useT } from "@/lib/i18n/context";
 import type { MessageKey } from "@/lib/i18n/messages";
 
@@ -44,6 +44,15 @@ interface AttendanceEntry {
   status: string; // "present" | "sick" | "absent"
 }
 
+interface CalendarMeeting {
+  id: string;
+  title: string;
+  startsAt: string;
+  endsAt: string;
+  status: string;
+  organizer: { id: string; name: string };
+}
+
 const ATTENDANCE_TONE: Record<string, string> = {
   present: "var(--ok)",
   sick:    "var(--warn)",
@@ -73,6 +82,8 @@ export function TeamCalendar({ onRequestCreated }: TeamCalendarProps) {
   const [requests, setRequests] = useState<CalendarRequest[]>([]);
   const [holidays, setHolidays] = useState<CalendarHoliday[]>([]);
   const [attendances, setAttendances] = useState<AttendanceEntry[]>([]);
+  const [meetings, setMeetings]       = useState<CalendarMeeting[]>([]);
+  const [timeZone, setTimeZone]       = useState<string>("UTC");
   const [workDays, setWorkDays] = useState<Set<number>>(new Set([1, 2, 3, 4, 5]));
   const [anchor,   setAnchor]   = useState<Date | null>(null);
   const [hovered,  setHovered]  = useState<Date | null>(null);
@@ -90,6 +101,8 @@ export function TeamCalendar({ onRequestCreated }: TeamCalendarProps) {
       setRequests(data.requests ?? []);
       setHolidays(data.holidays ?? []);
       setAttendances(data.attendances ?? []);
+      setMeetings(data.meetings ?? []);
+      if (typeof data.timeZone === "string") setTimeZone(data.timeZone);
       if (typeof data.workWeek === "string") {
         setWorkDays(new Set(
           data.workWeek
@@ -129,6 +142,15 @@ export function TeamCalendar({ onRequestCreated }: TeamCalendarProps) {
   function getRequestsForDay(day: Date) {
     const ds = dayStr(day);
     return requests.filter((r) => ds >= isoStr(r.startDate) && ds <= isoStr(r.endDate));
+  }
+
+  function getMeetingsForDay(day: Date): CalendarMeeting[] {
+    const ds = dayStr(day);
+    return meetings.filter((m) => {
+      // Compare by the day (in viewer-local terms) the meeting starts.
+      const startDay = m.startsAt.slice(0, 10);
+      return startDay === ds;
+    });
   }
 
   const previewRange = isSelecting && anchor && hovered
@@ -253,6 +275,7 @@ export function TeamCalendar({ onRequestCreated }: TeamCalendarProps) {
 
         {days.map((day) => {
           const dayReqs = getRequestsForDay(day);
+          const dayMeetings = getMeetingsForDay(day);
           const inMonth = isSameMonth(day, current);
           const todayDay = isToday(day);
           const selected = inRange(day);
@@ -318,6 +341,19 @@ export function TeamCalendar({ onRequestCreated }: TeamCalendarProps) {
                     {format(day, "d")}
                   </span>
                   <div className="flex items-center gap-1">
+                    {dayMeetings.length > 0 && inMonth && (
+                      <span
+                        className="inline-flex items-center gap-0.5 text-[9px] font-extrabold px-1 rounded-md"
+                        style={{ background: "var(--brand-soft)", color: "var(--brand)" }}
+                        title={dayMeetings.map((m) => {
+                          const time = formatInCompanyTz(new Date(m.startsAt), timeZone, { hour: "2-digit", minute: "2-digit", hour12: false });
+                          return `${time} ${m.title}`;
+                        }).join("\n")}
+                      >
+                        <Users size={8} />
+                        {dayMeetings.length}
+                      </span>
+                    )}
                     {attendance && inMonth && (
                       <span
                         className="w-2 h-2 rounded-full shrink-0"
