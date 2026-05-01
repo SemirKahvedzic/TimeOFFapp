@@ -32,6 +32,7 @@ interface Props {
 export function MeetingCard({ meeting, currentUserId, isAdmin, timeZone, onUpdate }: Props) {
   const t = useT();
   const [showCancel, setShowCancel] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -44,13 +45,17 @@ export function MeetingCard({ meeting, currentUserId, isAdmin, timeZone, onUpdat
   const dayLabel = formatInCompanyTz(start, timeZone, { weekday: "short", month: "short", day: "numeric" });
   const timeLabel = `${formatInCompanyTz(start, timeZone, { hour: "2-digit", minute: "2-digit", hour12: false })}–${formatInCompanyTz(end, timeZone, { hour: "2-digit", minute: "2-digit", hour12: false })}`;
 
-  async function cancel() {
+  // The same DELETE endpoint cancels a scheduled meeting on the first call
+  // (notifying attendees) and hard-deletes it on a second call once it's
+  // already cancelled — see src/app/api/meetings/[id]/route.ts.
+  async function callDelete(toastKey: "meetings.toast.cancelled" | "meetings.toast.deleted") {
     setBusy(true);
     setShowCancel(false);
+    setShowDelete(false);
     try {
       const res = await fetch(`/api/meetings/${meeting.id}`, { method: "DELETE" });
       if (!res.ok) throw new Error((await res.json()).error || "Failed");
-      toast.success(t("meetings.toast.cancelled"));
+      toast.success(t(toastKey));
       onUpdate();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("meetings.toast.failed"));
@@ -140,6 +145,21 @@ export function MeetingCard({ meeting, currentUserId, isAdmin, timeZone, onUpdat
                   </button>
                 </div>
               )}
+              {canModify && isCancelled && (
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setShowDelete(true)}
+                    disabled={busy}
+                    aria-label={t("meetings.delete.action")}
+                    title={t("meetings.delete.action")}
+                    className="p-1.5 rounded-lg transition-all duration-150 hover:bg-[var(--err-bg)] hover:text-[color:var(--err)]"
+                    style={{ color: "var(--ink-faint)" }}
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              )}
             </div>
 
             {meeting.location && (
@@ -199,7 +219,24 @@ export function MeetingCard({ meeting, currentUserId, isAdmin, timeZone, onUpdat
       >
         <div className="flex gap-2">
           <Button variant="secondary" className="flex-1" onClick={() => setShowCancel(false)}>{t("btn.cancel")}</Button>
-          <Button variant="danger" className="flex-1" onClick={cancel}>{t("meetings.cancel.confirm")}</Button>
+          <Button variant="danger" className="flex-1" onClick={() => callDelete("meetings.toast.cancelled")}>
+            {t("meetings.cancel.confirm")}
+          </Button>
+        </div>
+      </Modal>
+
+      <Modal
+        open={showDelete}
+        onClose={() => setShowDelete(false)}
+        title={t("meetings.delete.title")}
+        subtitle={t("meetings.delete.body", { title: meeting.title })}
+        size="sm"
+      >
+        <div className="flex gap-2">
+          <Button variant="secondary" className="flex-1" onClick={() => setShowDelete(false)}>{t("btn.cancel")}</Button>
+          <Button variant="danger" className="flex-1" onClick={() => callDelete("meetings.toast.deleted")}>
+            {t("meetings.delete.confirm")}
+          </Button>
         </div>
       </Modal>
 

@@ -211,6 +211,21 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
+  // Two-stage delete: a scheduled meeting is soft-cancelled (notifies
+  // attendees and bumps the .ics sequence). A meeting that is already
+  // cancelled is hard-deleted to clean up the organizer's list — by then
+  // attendees have been notified and have nothing left to act on.
+  if (existing.status === "cancelled") {
+    await prisma.meeting.delete({ where: { id } });
+    await audit({
+      actorId: session.user.id,
+      action: "meeting.deleted",
+      targetType: "Meeting",
+      targetId: id,
+    });
+    return NextResponse.json({ success: true, deleted: true });
+  }
+
   const meeting = await prisma.meeting.update({
     where: { id },
     data: { status: "cancelled", sequence: { increment: 1 } },
@@ -243,5 +258,5 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     }).catch((err) => console.error("[meetings.DELETE] cancel emails failed:", err));
   }
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ success: true, cancelled: true });
 }

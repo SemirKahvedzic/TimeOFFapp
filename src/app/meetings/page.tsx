@@ -61,6 +61,8 @@ export default function MeetingsPage() {
     () => meetings.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
     [meetings, safePage],
   );
+  const pageStart = meetings.length === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1;
+  const pageEnd   = Math.min(safePage * PAGE_SIZE, meetings.length);
 
   const userId = session?.user?.id ?? "";
   const isAdmin = session?.user?.role === "admin";
@@ -140,7 +142,12 @@ export default function MeetingsPage() {
             ))}
           </div>
 
-          <Paginator page={safePage} pageCount={pageCount} onPage={setPage} />
+          <div className="flex items-center justify-between gap-3 mt-6 flex-wrap">
+            <p className="text-[11px]" style={{ color: "var(--ink-mute)" }}>
+              {t("meetings.showing", { start: pageStart, end: pageEnd, total: meetings.length })}
+            </p>
+            <Paginator page={safePage} pageCount={pageCount} onPage={setPage} />
+          </div>
         </>
       )}
 

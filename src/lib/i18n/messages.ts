@@ -481,6 +481,12 @@ const en = {
   "meetings.cancel.title":        "Cancel this meeting?",
   "meetings.cancel.body":         "Everyone invited to \"{title}\" will get a cancellation email.",
   "meetings.cancel.confirm":      "Yes, cancel",
+  "meetings.delete.action":       "Delete",
+  "meetings.delete.title":        "Remove this meeting?",
+  "meetings.delete.body":         "This permanently removes \"{title}\" from your meetings. Attendees were already notified when it was cancelled.",
+  "meetings.delete.confirm":      "Yes, delete",
+  "meetings.toast.deleted":       "Meeting deleted",
+  "meetings.showing":             "Showing {start}–{end} of {total}",
 
   // ── Meeting invites widget ──────────────────────────────────
   "invites.title":           "Pending meeting invites",
@@ -945,6 +951,12 @@ const de: Record<Key, string> = {
   "meetings.cancel.title":        "Meeting absagen?",
   "meetings.cancel.body":         "Alle Eingeladenen zu \"{title}\" erhalten eine Absage-Mail.",
   "meetings.cancel.confirm":      "Ja, absagen",
+  "meetings.delete.action":       "Löschen",
+  "meetings.delete.title":        "Meeting entfernen?",
+  "meetings.delete.body":         "\"{title}\" wird endgültig aus deinen Meetings entfernt. Die Teilnehmer wurden bereits beim Absagen benachrichtigt.",
+  "meetings.delete.confirm":      "Ja, löschen",
+  "meetings.toast.deleted":       "Meeting gelöscht",
+  "meetings.showing":             "Zeige {start}–{end} von {total}",
 
   // ── Meeting invites widget ──────────────────────────────────
   "invites.title":           "Offene Meeting-Einladungen",
@@ -1407,6 +1419,12 @@ const it: Record<Key, string> = {
   "meetings.cancel.title":        "Annullare la riunione?",
   "meetings.cancel.body":         "Tutti gli invitati a \"{title}\" riceveranno un'email di annullamento.",
   "meetings.cancel.confirm":      "Sì, annulla",
+  "meetings.delete.action":       "Elimina",
+  "meetings.delete.title":        "Rimuovere questa riunione?",
+  "meetings.delete.body":         "\"{title}\" sarà rimossa definitivamente dalle tue riunioni. I partecipanti sono già stati avvisati al momento dell'annullamento.",
+  "meetings.delete.confirm":      "Sì, elimina",
+  "meetings.toast.deleted":       "Riunione eliminata",
+  "meetings.showing":             "Mostra {start}–{end} di {total}",
 
   // ── Meeting invites widget ──────────────────────────────────
   "invites.title":           "Inviti riunione in sospeso",
