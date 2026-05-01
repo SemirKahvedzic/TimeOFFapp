@@ -127,7 +127,10 @@ export async function sendMeetingEmail(args: {
     rsvpAcceptUrl: args.rsvpAcceptUrl,
     rsvpDeclineUrl: args.rsvpDeclineUrl,
   });
-  const method = args.kind === "cancel" ? "CANCEL" : "REQUEST";
+  // Resend's API rejects content_type with parameters (e.g. "; method=REQUEST")
+  // — it wants a bare MIME type. The METHOD line is already inside the .ics
+  // body (see src/lib/ics.ts), so external calendars still see REQUEST/CANCEL
+  // semantics from the file content itself.
   return deliver({
     to: args.to,
     subject,
@@ -137,7 +140,7 @@ export async function sendMeetingEmail(args: {
       {
         filename: "meeting.ics",
         content: args.ics,
-        contentType: `text/calendar; method=${method}; charset=utf-8`,
+        contentType: "text/calendar",
       },
     ],
   });
