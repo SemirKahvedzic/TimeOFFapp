@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -50,13 +50,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         req.headers.get("origin") ??
         process.env.NEXTAUTH_URL ??
         `https://${req.headers.get("host")}`;
-      notifyOrganizerOfRsvp({
-        meeting,
-        attendee: { id: attendee.user.id, name: attendee.user.name },
-        status,
-        company: { name: company.name, timeZone: company.timeZone },
-        meetingsUrl: `${origin}/meetings`,
-      });
+      after(() =>
+        notifyOrganizerOfRsvp({
+          meeting,
+          attendee: { id: attendee.user.id, name: attendee.user.name },
+          status,
+          company: { name: company.name, timeZone: company.timeZone },
+          meetingsUrl: `${origin}/meetings`,
+        }),
+      );
     }
   }
 

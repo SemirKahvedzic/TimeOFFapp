@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -151,16 +151,21 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       `https://${req.headers.get("host")}`;
     const meetingsUrl = `${origin}/meetings`;
 
+    // after() keeps the serverless function alive past the response so the
+    // email fan-out actually completes.
+
     // Removed attendees get a CANCEL email referencing the prior meeting.
     if (removed.length > 0) {
-      sendMeetingInvites({
-        meeting,
-        kind: "cancel",
-        company,
-        meetingsUrl,
-        origin,
-        recipients: removed,
-      }).catch((err) => console.error("[meetings.PATCH] cancel-removed emails failed:", err));
+      after(() =>
+        sendMeetingInvites({
+          meeting,
+          kind: "cancel",
+          company,
+          meetingsUrl,
+          origin,
+          recipients: removed,
+        }).catch((err) => console.error("[meetings.PATCH] cancel-removed emails failed:", err)),
+      );
     }
 
     // Existing attendees (still present) get UPDATE emails.
@@ -168,26 +173,30 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       .map((a) => a.user)
       .filter((u) => !added.some((x) => x.id === u.id));
     if (existingStillAttending.length > 0) {
-      sendMeetingInvites({
-        meeting,
-        kind: "update",
-        company,
-        meetingsUrl,
-        origin,
-        recipients: existingStillAttending,
-      }).catch((err) => console.error("[meetings.PATCH] update emails failed:", err));
+      after(() =>
+        sendMeetingInvites({
+          meeting,
+          kind: "update",
+          company,
+          meetingsUrl,
+          origin,
+          recipients: existingStillAttending,
+        }).catch((err) => console.error("[meetings.PATCH] update emails failed:", err)),
+      );
     }
 
     // Newly-added attendees get a fresh INVITE.
     if (added.length > 0) {
-      sendMeetingInvites({
-        meeting,
-        kind: "invite",
-        company,
-        meetingsUrl,
-        origin,
-        recipients: added,
-      }).catch((err) => console.error("[meetings.PATCH] invite-added emails failed:", err));
+      after(() =>
+        sendMeetingInvites({
+          meeting,
+          kind: "invite",
+          company,
+          meetingsUrl,
+          origin,
+          recipients: added,
+        }).catch((err) => console.error("[meetings.PATCH] invite-added emails failed:", err)),
+      );
     }
   }
 
@@ -248,14 +257,16 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       req.headers.get("origin") ??
       process.env.NEXTAUTH_URL ??
       `https://${req.headers.get("host")}`;
-    sendMeetingInvites({
-      meeting,
-      kind: "cancel",
-      company,
-      meetingsUrl: `${origin}/meetings`,
-      origin,
-      recipients: meeting.attendees.map((a) => a.user),
-    }).catch((err) => console.error("[meetings.DELETE] cancel emails failed:", err));
+    after(() =>
+      sendMeetingInvites({
+        meeting,
+        kind: "cancel",
+        company,
+        meetingsUrl: `${origin}/meetings`,
+        origin,
+        recipients: meeting.attendees.map((a) => a.user),
+      }).catch((err) => console.error("[meetings.DELETE] cancel emails failed:", err)),
+    );
   }
 
   return NextResponse.json({ success: true, cancelled: true });

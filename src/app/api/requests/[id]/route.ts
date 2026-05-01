@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -90,18 +90,20 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       process.env.NEXTAUTH_URL ??
       `https://${req.headers.get("host")}`;
     const company = await getCompany().catch(() => null);
-    sendRequestStatusEmail({
-      to: request.user.email,
-      name: request.user.name,
-      status: status as "approved" | "rejected",
-      startDate: request.startDate.toISOString().slice(0, 10),
-      endDate: request.endDate.toISOString().slice(0, 10),
-      rejectionReason: status === "rejected" ? (rejectionReason || null) : null,
-      companyName: company?.name ?? "TimeOff",
-      dashboardUrl: `${origin}/dashboard`,
-    }).catch((err) => {
-      console.error("[requests.PATCH] status email failed:", err);
-    });
+    after(() =>
+      sendRequestStatusEmail({
+        to: request.user.email,
+        name: request.user.name,
+        status: status as "approved" | "rejected",
+        startDate: request.startDate.toISOString().slice(0, 10),
+        endDate: request.endDate.toISOString().slice(0, 10),
+        rejectionReason: status === "rejected" ? (rejectionReason || null) : null,
+        companyName: company?.name ?? "TimeOff",
+        dashboardUrl: `${origin}/dashboard`,
+      }).catch((err) => {
+        console.error("[requests.PATCH] status email failed:", err);
+      }),
+    );
   }
 
   return NextResponse.json(request);

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -132,17 +132,22 @@ export async function POST(req: NextRequest) {
       req.headers.get("origin") ??
       process.env.NEXTAUTH_URL ??
       `https://${req.headers.get("host")}`;
-    sendMeetingInvites({
-      meeting,
-      kind: "invite",
-      company,
-      meetingsUrl: `${origin}/meetings`,
-      origin,
-      recipients: [
-        ...meeting.attendees.map((a) => a.user),
-        meeting.organizer,
-      ],
-    }).catch((err) => console.error("[meetings.POST] invite emails failed:", err));
+    // after() keeps the serverless function alive past the response so the
+    // email fan-out actually completes. Plain fire-and-forget gets killed
+    // when Vercel terminates the function.
+    after(() =>
+      sendMeetingInvites({
+        meeting,
+        kind: "invite",
+        company,
+        meetingsUrl: `${origin}/meetings`,
+        origin,
+        recipients: [
+          ...meeting.attendees.map((a) => a.user),
+          meeting.organizer,
+        ],
+      }).catch((err) => console.error("[meetings.POST] invite emails failed:", err)),
+    );
   }
 
   return NextResponse.json(meeting, { status: 201 });

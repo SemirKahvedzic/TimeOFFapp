@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { prisma } from "@/lib/db";
 import { audit } from "@/lib/audit";
 import { getCompany } from "@/lib/company";
@@ -67,13 +67,15 @@ export async function POST(req: NextRequest) {
         req.headers.get("origin") ??
         process.env.NEXTAUTH_URL ??
         `https://${req.headers.get("host")}`;
-      notifyOrganizerOfRsvp({
-        meeting: attendee.meeting,
-        attendee: { id: attendee.user.id, name: attendee.user.name },
-        status: payload.a,
-        company: { name: company.name, timeZone: company.timeZone },
-        meetingsUrl: `${origin}/meetings`,
-      });
+      after(() =>
+        notifyOrganizerOfRsvp({
+          meeting: attendee.meeting,
+          attendee: { id: attendee.user.id, name: attendee.user.name },
+          status: payload.a,
+          company: { name: company.name, timeZone: company.timeZone },
+          meetingsUrl: `${origin}/meetings`,
+        }),
+      );
     }
   }
 
