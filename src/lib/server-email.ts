@@ -13,8 +13,11 @@ const resend = apiKey ? new Resend(apiKey) : null;
 
 interface EmailAttachment {
   filename: string;
-  content: string;          // raw text or base64
-  contentType?: string;     // defaults to application/octet-stream
+  /** Raw text content of the attachment. Will be wrapped in a Buffer before
+   * handing to Resend — passing a plain string makes Resend interpret it as
+   * already-base64, which silently corrupts text attachments like .ics. */
+  content: string;
+  contentType?: string;
 }
 
 async function deliver(args: {
@@ -38,13 +41,16 @@ async function deliver(args: {
     html,
     attachments: attachments?.map((a) => ({
       filename: a.filename,
-      content: a.content,
+      content: Buffer.from(a.content, "utf-8"),
       contentType: a.contentType,
     })),
   });
   if (error) {
-    console.error("[server-email] Resend error:", error);
-    throw new Error("Failed to send email");
+    console.error(
+      `[server-email] Resend rejected "${subject}" to ${to}:`,
+      error,
+    );
+    throw new Error(`Failed to send email: ${error.message ?? "unknown"}`);
   }
   return { ok: true };
 }
