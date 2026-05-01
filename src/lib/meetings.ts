@@ -96,18 +96,26 @@ export async function sendMeetingInvites({ meeting, kind, company, meetingsUrl, 
   });
   const whenText = `${dayLabel} · ${startTime}–${endTime} (${company.timeZone})`;
 
-  await Promise.all(
-    recipients.map((r) => {
-      // Organizer's copy gets no RSVP buttons (they're hosting the meeting).
-      // Attendees get tokenized one-click links so they can respond from any
-      // device without logging in.
-      const isOrganizer = r.id === meeting.organizer.id;
-      const acceptUrl = isOrganizer ? null
-        : `${origin}/rsvp?token=${encodeURIComponent(signRsvpToken(meeting.id, r.id, "accepted"))}`;
-      const declineUrl = isOrganizer ? null
-        : `${origin}/rsvp?token=${encodeURIComponent(signRsvpToken(meeting.id, r.id, "declined"))}`;
+  // Resend's free tier caps API calls at ~2 per second. Sending recipients
+  // concurrently via Promise.all bursts past that ceiling and the excess
+  // emails get silently rate-limited away. We send sequentially with a
+  // small gap between calls — the route is already fire-and-forget so the
+  // extra wall-clock time isn't user-visible.
+  const RATE_LIMIT_GAP_MS = 600;
+  let sent = 0;
+  let failed = 0;
+  for (const r of recipients) {
+    // Organizer's copy gets no RSVP buttons (they're hosting the meeting).
+    // Attendees get tokenized one-click links so they can respond from any
+    // device without logging in.
+    const isOrganizer = r.id === meeting.organizer.id;
+    const acceptUrl = isOrganizer ? null
+      : `${origin}/rsvp?token=${encodeURIComponent(signRsvpToken(meeting.id, r.id, "accepted"))}`;
+    const declineUrl = isOrganizer ? null
+      : `${origin}/rsvp?token=${encodeURIComponent(signRsvpToken(meeting.id, r.id, "declined"))}`;
 
-      return sendMeetingEmail({
+    try {
+      await sendMeetingEmail({
         to: r.email,
         recipientName: r.name,
         kind,
@@ -122,7 +130,15 @@ export async function sendMeetingInvites({ meeting, kind, company, meetingsUrl, 
         ics,
         rsvpAcceptUrl: acceptUrl,
         rsvpDeclineUrl: declineUrl,
-      }).catch((err) => console.error(`[meetings] email to ${r.email} failed:`, err));
-    }),
-  );
+      });
+      sent += 1;
+    } catch (err) {
+      failed += 1;
+      console.error(`[meetings] email to ${r.email} (${kind}) failed:`, err);
+    }
+    if (r !== recipients[recipients.length - 1]) {
+      await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_GAP_MS));
+    }
+  }
+  console.log(`[meetings] ${kind} emails: ${sent} sent, ${failed} failed (of ${recipients.length})`);
 }
