@@ -1045,7 +1045,8 @@ function ICalSection({ company }: { company: Company }) {
         <input
           readOnly
           value={url}
-          className="bg-transparent flex-1 outline-none text-xs font-mono truncate"
+          size={1}
+          className="bg-transparent flex-1 min-w-0 outline-none text-xs font-mono truncate"
           style={{ color: "var(--ink)" }}
         />
         <Button size="sm" variant="secondary" onClick={copy}>
