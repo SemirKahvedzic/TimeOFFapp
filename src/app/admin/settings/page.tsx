@@ -141,15 +141,20 @@ function ColorInput({ value, onChange }: { value: string; onChange: (v: string) 
         type="color"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-9 h-9 rounded-xl"
-        style={{ boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.08)" }}
+        className="w-9 h-9 rounded-xl shrink-0"
+        // The native color input is transparent after our globals.css
+        // appearance:none reset, so paint the current value as the
+        // background — guarantees the swatch is visible on every browser
+        // (notably iOS Safari, where the swatch pseudo can render empty).
+        style={{ background: value, boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.08)" }}
         aria-label="Color"
       />
       <input
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="bg-transparent text-sm flex-1 outline-none font-mono uppercase"
+        size={1}
+        className="bg-transparent text-sm flex-1 min-w-0 outline-none font-mono uppercase"
         style={{ color: "var(--ink)" }}
       />
     </div>

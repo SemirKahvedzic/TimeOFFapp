@@ -76,6 +76,11 @@ export const viewport = {
   ],
   width: "device-width",
   initialScale: 1,
+  // iOS lets users pinch below 1.0 by default, which scales the page down
+  // and exposes the body background past the layout edges. Pinning the
+  // minimum to 1 keeps the layout locked at device width while still
+  // allowing zoom-in for accessibility.
+  minimumScale: 1,
 };
 
 async function getUserPrefs() {
