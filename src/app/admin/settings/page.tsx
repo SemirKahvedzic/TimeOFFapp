@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import {
   Save, Trash2, Plus, Building2, Palette, Briefcase, PartyPopper,
   Link as LinkIcon, Copy, Check, Pencil, Upload, ImageIcon,
-  RotateCcw, Lock,
+  RotateCcw, Lock, Sparkles,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/Button";
@@ -105,7 +105,7 @@ export default function AdminSettingsPage() {
 
       {section === "brand"       && company && <BrandSection company={company} onSaved={refresh} />}
       {section === "types"       && <LeaveTypesSection types={types} onChange={refresh} />}
-      {section === "holidays"    && <HolidaysSection holidays={holidays} onChange={refresh} />}
+      {section === "holidays"    && <HolidaysSection holidays={holidays} defaultCountry={company?.countryCode ?? "US"} onChange={refresh} />}
       {section === "departments" && <DepartmentsSection depts={departments} onChange={refresh} />}
       {section === "ical"        && company && <ICalSection company={company} />}
     </div>
@@ -689,8 +689,9 @@ function LeaveTypeEditor({
 /* ─────────────────────────────────────────────────────────────── */
 /* Holidays section                                                 */
 /* ─────────────────────────────────────────────────────────────── */
-function HolidaysSection({ holidays, onChange }: { holidays: Holiday[]; onChange: () => void }) {
+function HolidaysSection({ holidays, defaultCountry, onChange }: { holidays: Holiday[]; defaultCountry: string; onChange: () => void }) {
   const [showNew, setShowNew] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [editing, setEditing] = useState<Holiday | null>(null);
   const [deleting, setDeleting] = useState<Holiday | null>(null);
   const [deletingNow, setDeletingNow] = useState(false);
@@ -712,14 +713,20 @@ function HolidaysSection({ holidays, onChange }: { holidays: Holiday[]; onChange
 
   return (
     <div className="rounded-3xl p-6 space-y-5" style={{ background: "var(--surface-2)", boxShadow: "var(--soft-1)" }}>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <h2 className="text-base font-extrabold tracking-tight" style={{ color: "var(--ink)" }}>
           {t("hol.section.title", { year: new Date().getFullYear() })}
         </h2>
-        <Button size="sm" variant="secondary" onClick={() => setShowNew(true)}>
-          <Plus size={13} />
-          {t("hol.add")}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="secondary" onClick={() => setShowImport(true)}>
+            <Sparkles size={13} />
+            {t("hol.import")}
+          </Button>
+          <Button size="sm" variant="secondary" onClick={() => setShowNew(true)}>
+            <Plus size={13} />
+            {t("hol.add")}
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-2">
@@ -764,6 +771,14 @@ function HolidaysSection({ holidays, onChange }: { holidays: Holiday[]; onChange
           key="new"
           onClose={() => setShowNew(false)}
           onSaved={() => { setShowNew(false); onChange(); }}
+        />
+      )}
+
+      {showImport && (
+        <HolidayImporter
+          defaultCountry={defaultCountry}
+          onClose={() => setShowImport(false)}
+          onImported={() => { setShowImport(false); onChange(); }}
         />
       )}
 
@@ -855,6 +870,133 @@ function HolidayEditor({
           <Button className="flex-1" loading={saving} onClick={save}>
             <Save size={14} />
             {existing ? t("btn.save") : t("hol.add")}
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+/* ---------- Holiday auto-importer ---------- */
+function HolidayImporter({
+  defaultCountry, onClose, onImported,
+}: { defaultCountry: string; onClose: () => void; onImported: () => void }) {
+  const t = useT();
+  const currentYear = new Date().getFullYear();
+  const [country, setCountry] = useState(defaultCountry);
+  const [year, setYear] = useState(currentYear);
+  const [countries, setCountries] = useState<Record<string, string>>({});
+  const [preview, setPreview] = useState<{ date: string; name: string }[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [importing, setImporting] = useState(false);
+
+  // Re-fetch the preview whenever country/year changes. The first response
+  // also seeds the country dropdown — date-holidays ships ~200 entries, so
+  // returning the list inline is cheaper than a separate round trip.
+  useEffect(() => {
+    if (!country) return;
+    let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLoading(true);
+    fetch(`/api/holidays/import?countryCode=${encodeURIComponent(country)}&year=${year}`)
+      .then((r) => (r.ok ? r.json() : { countries: {}, holidays: [] }))
+      .then((data: { countries: Record<string, string>; holidays: { date: string; name: string }[] }) => {
+        if (cancelled) return;
+        if (data.countries && Object.keys(data.countries).length) setCountries(data.countries);
+        setPreview(data.holidays ?? []);
+      })
+      .catch(() => { if (!cancelled) setPreview([]); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [country, year]);
+
+  async function runImport() {
+    setImporting(true);
+    try {
+      const res = await fetch("/api/holidays/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ countryCode: country, year }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed");
+      toast.success(t("hol.import.toast.done", { created: data.created, skipped: data.skipped }));
+      onImported();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : t("card.toast.failed"));
+    } finally {
+      setImporting(false);
+    }
+  }
+
+  // Years offered: previous, current, next two. Most onboarding sets up the
+  // current year; the extras let admins pre-load next year's calendar without
+  // waiting for January 1.
+  const yearChoices = [currentYear - 1, currentYear, currentYear + 1, currentYear + 2];
+
+  // Sort countries alphabetically by name. The API returns an unordered map.
+  const countryEntries = Object.entries(countries).sort((a, b) => a[1].localeCompare(b[1]));
+
+  return (
+    <Modal
+      open={true}
+      onClose={onClose}
+      title={t("hol.import.title")}
+      subtitle={t("hol.import.subtitle")}
+      size="md"
+    >
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <FieldLabel>{t("hol.import.country")}</FieldLabel>
+            <Select value={country} onChange={(e) => setCountry(e.target.value)}>
+              {countryEntries.length === 0 && <option value={country}>{country}</option>}
+              {countryEntries.map(([code, name]) => (
+                <option key={code} value={code}>{name}</option>
+              ))}
+            </Select>
+          </div>
+          <div>
+            <FieldLabel>{t("hol.import.year")}</FieldLabel>
+            <Select value={String(year)} onChange={(e) => setYear(parseInt(e.target.value, 10))}>
+              {yearChoices.map((y) => <option key={y} value={y}>{y}</option>)}
+            </Select>
+          </div>
+        </div>
+
+        <div
+          className="rounded-2xl p-3 max-h-72 overflow-y-auto"
+          style={{ background: "var(--surface)", boxShadow: "var(--soft-press-sm)" }}
+        >
+          {loading ? (
+            <p className="text-xs italic text-center py-6" style={{ color: "var(--ink-faint)" }}>
+              {t("hol.import.loading")}
+            </p>
+          ) : preview.length === 0 ? (
+            <p className="text-xs italic text-center py-6" style={{ color: "var(--ink-faint)" }}>
+              {t("hol.import.empty")}
+            </p>
+          ) : (
+            <ul className="space-y-1.5">
+              {preview.map((h, idx) => (
+                <li key={`${h.date}-${idx}`} className="flex items-center justify-between gap-3 text-xs">
+                  <span className="font-bold truncate" style={{ color: "var(--ink)" }}>{h.name}</span>
+                  <span className="font-mono shrink-0" style={{ color: "var(--ink-mute)" }}>{h.date}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <p className="text-[11px]" style={{ color: "var(--ink-faint)" }}>
+          {t("hol.import.note")}
+        </p>
+
+        <div className="flex gap-2 pt-1">
+          <Button variant="secondary" className="flex-1" onClick={onClose}>{t("btn.cancel")}</Button>
+          <Button className="flex-1" loading={importing} disabled={preview.length === 0} onClick={runImport}>
+            <Sparkles size={14} />
+            {t("hol.import.confirm", { count: preview.length })}
           </Button>
         </div>
       </div>
